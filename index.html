@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>数字后端 PD 工作流 · 可视化教程</title>
+<style>
+:root{
+  --bg:#070c14;
+  --bg2:#0c1420;
+  --panel:#101821;
+  --panel2:#141d28;
+  --line:rgba(70,160,170,.18);
+  --line2:rgba(120,200,210,.28);
+  --text:#d5e0ea;
+  --muted:#8aa0b3;
+  --dim:#6b8296;
+  --cyan:#3ee0d0;
+  --cyan2:#7af0e4;
+  --teal:#1a9b8e;
+  --gold:#e8c35a;
+  --gold2:#f3d98a;
+  --yellow:#f5d76e;
+  --red:#e86b6b;
+  --orange:#f0a24b;
+  --blue:#5aa6ff;
+  --purple:#8b7cff;
+  --pink:#e86aa0;
+  --green:#4dce8a;
+  --ok:#3ecf8e;
+  --danger:#c45c5c;
+  --shadow:0 8px 28px rgba(0,0,0,.35);
+  --r:10px;
+  --font:"Noto Sans CJK SC","Noto Sans CJK SC Regular","PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:"Noto Sans Mono CJK SC","Noto Sans CJK SC","Sarasa Mono SC",ui-monospace,Menlo,Consolas,monospace;
+  --left-w: minmax(250px, 332px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:13.5px;line-height:1.55;overflow:hidden}
+button,select{font-family:inherit}
+body{
+  background:
+    linear-gradient(180deg,rgba(8,30,36,.35),transparent 120px),
+    repeating-linear-gradient(0deg,transparent 0 27px,rgba(50,140,150,.045) 27px 28px),
+    repeating-linear-gradient(90deg,transparent 0 27px,rgba(50,140,150,.045) 27px 28px),
+    radial-gradient(1200px 500px at 70% -10%,rgba(40,160,150,.08),transparent 55%),
+    var(--bg);
+}
+.app{display:grid;grid-template-rows:auto auto minmax(0,1fr);height:100%;min-height:0}
+.header{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:8px 20px 6px 22px;border-bottom:1px solid var(--line);background:rgba(7,12,20,.72);backdrop-filter:blur(6px);
+  min-height:56px;
+}
+.brand{min-width:0;padding-left:2px}
+.brand h1{margin:0;font-size:clamp(16px,1.5vw,22px);font-weight:700;color:var(--gold);letter-spacing:.02em;white-space:nowrap}
+.brand h1 em{font-style:normal;color:var(--gold2)}
+.brand p{margin:1px 0 0;color:var(--muted);font-size:clamp(11px,0.9vw,12.5px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.pill{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line2);background:rgba(16,28,36,.7);color:var(--muted);border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer}
+.pill:hover{border-color:var(--cyan);color:var(--cyan2)}
+.pill.gold{color:var(--gold);border-color:rgba(232,195,90,.35)}
+.stats{display:flex;flex-direction:column;align-items:flex-end;line-height:1.35;font-size:11.5px;color:var(--muted)}
+.stats b{color:var(--text);font-weight:600}
+.stats .tag{color:var(--gold);font-size:10.5px;letter-spacing:.04em}
+.stepnav{padding:7px 14px 8px;border-bottom:1px solid var(--line);background:rgba(8,14,22,.55)}
+.stepnav-row{display:flex;flex-wrap:wrap;gap:6px}
+.step-btn{
+  appearance:none;border:1px solid rgba(70,140,150,.22);background:#121c26;color:var(--muted);
+  border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  transition:background .2s,border-color .2s,color .2s,transform .15s;
+}
+.step-btn .n{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;font-size:10px;background:#1c2a36;color:#9eb3c4}
+.step-btn:hover{border-color:var(--cyan);color:var(--text)}
+.step-btn.active{background:linear-gradient(180deg,#3a2e12,#2a2412);border-color:rgba(232,195,90,.7);color:var(--gold2);box-shadow:0 0 0 1px rgba(232,195,90,.15)}
+.step-btn.active .n{background:var(--gold);color:#1a1406;font-weight:700}
+.step-btn.done{color:#b7c9d4}
+.step-btn.done .n{background:#1b4a40;color:var(--cyan)}
+.main{display:grid;grid-template-columns:var(--left-w) minmax(0,1fr);min-height:0;height:100%}
+.left{
+  min-width:0;min-height:0;overflow:auto;padding:10px 12px 16px;
+  border-right:1px solid var(--line);background:rgba(8,14,22,.6);
+}
+.left::-webkit-scrollbar,.qa-body::-webkit-scrollbar,pre::-webkit-scrollbar{width:8px;height:8px}
+.left::-webkit-scrollbar-thumb{background:#2a3d4c;border-radius:8px}
+.step-kicker{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.badge-num{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-weight:700;background:linear-gradient(180deg,#3d3316,#2a2412);color:var(--gold);border:1px solid rgba(232,195,90,.4)}
+.step-kicker h2{margin:0;font-size:18px;color:var(--gold);line-height:1.2}
+.step-kicker small{display:block;color:var(--dim);font-size:11px;font-weight:400;letter-spacing:.04em}
+.lead{margin:0 0 10px;color:#c5d3de;font-size:13px}
+.io{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 10px}
+.box{background:rgba(16,28,38,.8);border:1px solid var(--line);border-radius:8px;padding:7px 8px}
+.box h3{margin:0 0 4px;font-size:11px;color:var(--cyan);font-weight:600;letter-spacing:.06em}
+.box ul{margin:0;padding-left:16px;color:var(--muted);font-size:12px}
+.box li{margin:2px 0}
+.box code,.cmd code,kbd{font-family:var(--mono);font-size:.92em;color:var(--cyan2)}
+.sec{margin:10px 0}
+.sec h3{margin:0 0 6px;font-size:12.5px;color:var(--text);display:flex;align-items:center;gap:6px}
+.sec h3::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+.sec ol{margin:0;padding-left:18px}
+.sec li{margin:3px 0;color:#c9d6e0}
+.why{color:#c3d0da;font-size:12.5px}
+.pits .pit{background:rgba(80,24,28,.35);border:1px solid rgba(200,80,80,.3);border-radius:8px;padding:7px 8px;margin:6px 0;color:#e7c8c8;font-size:12.5px}
+.pits .pit b{color:#ff9a9a;display:block;margin-bottom:2px}
+.cmd{background:#0b1518;border:1px solid rgba(40,160,140,.28);border-radius:8px;padding:8px 10px;overflow:auto}
+.cmd .tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.cmd .t{font-size:10.5px;border-radius:999px;padding:1px 7px;border:1px solid rgba(62,224,208,.35);color:var(--cyan)}
+.cmd pre{margin:0;font-family:var(--mono);font-size:11.5px;color:#b7e8df;line-height:1.5;white-space:pre-wrap}
+.hint{margin-top:12px;padding:7px 8px;border:1px dashed var(--line2);border-radius:8px;color:var(--dim);font-size:11.5px}
+.hint kbd{display:inline-block;padding:0 5px;border:1px solid #3a5160;border-bottom-width:2px;border-radius:4px;color:var(--gold2);background:#18222c}
+.center{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding:8px 10px 8px}
+.toolbar{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+.tb-btn{appearance:none;border:1px solid rgba(80,140,150,.28);background:#18232e;color:var(--text);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12.5px}
+.tb-btn:hover{border-color:var(--cyan);color:var(--cyan2)}
+.tb-btn:disabled{opacity:.4;cursor:not-allowed}
+.tb-btn.primary{background:linear-gradient(180deg,#1e5c54,#153f3b);border-color:rgba(62,224,208,.45);color:var(--cyan2)}
+.prog{flex:1;height:6px;background:#1b2832;border-radius:99px;overflow:hidden;position:relative}
+.prog>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2ee0c5,var(--gold));border-radius:99px;transition:width .08s linear}
+.speed{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:4px}
+.speed select{background:#18232e;color:var(--text);border:1px solid #2c4250;border-radius:6px;padding:3px 4px}
+.stage-wrap{position:relative;min-height:0;background:linear-gradient(180deg,#0d151f,#0a1018);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.stage-title{position:absolute;right:10px;top:8px;z-index:3;font-size:11px;color:var(--gold2);background:rgba(10,16,24,.75);border:1px solid rgba(232,195,90,.3);padding:2px 8px;border-radius:99px}
+#stage{width:100%;height:100%;display:block}
+.legend{position:absolute;left:8px;top:34px;z-index:3;font-size:10.5px;color:var(--muted);background:rgba(8,14,22,.72);border:1px solid var(--line);border-radius:8px;padding:6px 8px;line-height:1.6;pointer-events:none;max-width:190px}
+.legend i{display:inline-block;width:10px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.toast{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:4;padding:10px 18px;border-radius:10px;background:rgba(8,20,22,.9);border:1px solid rgba(62,224,208,.5);color:var(--cyan2);font-size:18px;letter-spacing:.08em;opacity:0;pointer-events:none;transition:opacity .3s}
+.toast.show{opacity:1}
+.qa{border:1px solid var(--line);border-radius:12px;background:rgba(12,18,26,.85);margin-top:8px;min-height:0;max-height:min(196px,28vh);display:flex;flex-direction:column}
+.qa-h{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 4px;color:var(--muted);font-size:12px}
+.qa-h b{color:var(--text);margin-right:6px}
+.qa-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:7px;padding:0 8px 8px;overflow:auto}
+.qcard{background:#121c26;border:1px solid #243442;border-left:3px solid var(--cyan);border-radius:8px;padding:6px 8px;cursor:pointer;min-width:0;transition:border-color .2s,background .2s}
+.qcard:nth-child(2){border-left-color:var(--green)}
+.qcard:nth-child(3){border-left-color:var(--gold)}
+.qcard:nth-child(4){border-left-color:var(--purple)}
+.qcard:hover,.qcard.open{background:#182633;border-color:#3a5a66}
+.qcard h4{margin:0 0 2px;font-size:12.5px;color:var(--gold2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qcard .sum{margin:0;color:var(--muted);font-size:11.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.qcard .full{display:none;margin:6px 0 0;color:#c9d6e0;font-size:12px}
+.qcard.open .sum{display:none}
+.qcard.open .full{display:block}
+.qcard.open h4{white-space:normal}
+#tooltip{
+  position:fixed;z-index:50;max-width:280px;padding:7px 9px;border-radius:8px;
+  background:#101c24;border:1px solid rgba(62,224,208,.4);color:var(--text);font-size:12px;line-height:1.45;
+  pointer-events:none;opacity:0;transform:translate(12px,12px);box-shadow:var(--shadow)
+}
+#tooltip.show{opacity:1}
+.cover{
+  position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;
+  background:
+    radial-gradient(800px 400px at 30% 40%,rgba(40,160,150,.1),transparent 60%),
+    repeating-linear-gradient(0deg,transparent 0 27px,rgba(50,140,150,.05) 27px 28px),
+    repeating-linear-gradient(90deg,transparent 0 27px,rgba(50,140,150,.05) 27px 28px),
+    #070c14;
+}
+.cover.show{display:flex}
+.cover-inner{display:flex;align-items:center;gap:48px;padding:24px;max-width:1100px}
+.chip-mini{width:220px;height:220px;flex-shrink:0}
+.cover h1{margin:0 0 8px;font-size:clamp(28px,4vw,44px);color:#fff;font-weight:750}
+.cover h1 span{color:var(--cyan2)}
+.cover .eyebrow{color:var(--dim);letter-spacing:.2em;font-size:12px;margin-bottom:8px}
+.cover .sub{color:var(--muted);max-width:560px;margin:0 0 18px}
+.cover-stats{display:flex;gap:10px;margin-bottom:18px}
+.cover-stats div{background:#121c26;border:1px solid var(--line);border-radius:10px;padding:10px 16px;min-width:110px}
+.cover-stats strong{display:block;font-size:22px;color:var(--text)}
+.cover-stats span{color:var(--dim);font-size:12px}
+.enter{appearance:none;border:0;background:linear-gradient(90deg,#2ee0c5,#3aa7e8);color:#06201c;font-weight:700;border-radius:999px;padding:10px 22px;font-size:15px;cursor:pointer}
+.enter:hover{filter:brightness(1.08)}
+.fine{margin-top:10px;color:var(--dim);font-size:12px}
+@media (max-width:1400px){
+  .brand p{max-width:42vw}
+  .qa-body{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .legend{transform:scale(.92);transform-origin:top left}
+}
+@media (max-height:800px){
+  body{font-size:12.5px}
+  .header{padding:4px 12px;min-height:46px}
+  .stepnav{padding:4px 10px 5px}
+  .step-btn{padding:3px 8px;font-size:11px}
+  .left{padding:6px 8px 10px}
+  .qa{max-height:min(160px,26vh)}
+  .center{padding:6px 8px}
+}
+@media (max-width:1366px) and (max-height:768px){
+  .qa-body{gap:5px}
+  .qcard h4{font-size:11.5px}
+  .stats{font-size:10.5px}
+  .step-kicker h2{font-size:16px}
+}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="header">
+    <div class="brand">
+      <h1>数字后端 <em>PD 工作流</em> · 可视化教程</h1>
+      <p>从门级网表到 GDSII —— 15 个步骤，每一步都有对应工序动画与面试向讲解</p>
+    </div>
+    <div class="header-right">
+      <button class="pill" id="btnCover" type="button">封面</button>
+      <button class="pill" id="btnFs" type="button" title="全屏 (F)">全屏演示</button>
+      <button class="pill gold" type="button" id="btnKeys" title="快捷键">快捷键</button>
+      <div class="stats">
+        <span class="tag">示例设计 · 非真实项目数据</span>
+        <b>mini_cpu · 28nm</b>
+        <span>263 cells · 32 DFF · 9 macro · 60 pads</span>
+      </div>
+    </div>
+  </header>
+  <nav class="stepnav" id="stepnav" aria-label="步骤导航"></nav>
+  <div class="main">
+    <aside class="left" id="left"></aside>
+    <section class="center">
+      <div class="toolbar">
+        <button class="tb-btn" id="btnPrev" type="button">上一步</button>
+        <button class="tb-btn primary" id="btnPlay" type="button">暂停</button>
+        <button class="tb-btn" id="btnReplay" type="button">重放</button>
+        <button class="tb-btn" id="btnNext" type="button">下一步</button>
+        <div class="prog" title="本步动画进度"><i id="progbar"></i></div>
+        <div class="speed">速度
+          <select id="speed">
+            <option value="0.5">0.5×</option>
+            <option value="1" selected>1×</option>
+            <option value="1.5">1.5×</option>
+            <option value="2">2×</option>
+          </select>
+        </div>
+        <span id="stepPos" style="color:var(--muted);font-size:12px;white-space:nowrap">1 / 15</span>
+      </div>
+      <div class="stage-wrap" id="stageWrap">
+        <div class="stage-title" id="stageTitle"></div>
+        <div class="legend" id="legend"></div>
+        <div class="toast" id="toast"></div>
+        <svg id="stage" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="本步工序画布"></svg>
+      </div>
+      <div class="qa">
+        <div class="qa-h"><span><b>本步 QA 检查</b>点击卡片展开，便于面试追问</span><span>过关再进入下一步</span></div>
+        <div class="qa-body" id="qa"></div>
+      </div>
+    </section>
+  </div>
+</div>
+<div id="tooltip"></div>
+<div class="cover show" id="cover">
+  <div class="cover-inner">
+    <svg class="chip-mini" viewBox="0 0 200 200" aria-hidden="true">
+      <rect x="16" y="16" width="168" height="168" rx="8" fill="#0e1620" stroke="#e8c35a" stroke-width="3"/>
+      <rect x="28" y="28" width="144" height="144" fill="none" stroke="#3ee0d0" stroke-width="1" opacity=".5"/>
+      <g fill="#3a2a12" stroke="#c9a227" stroke-width=".8">
+        <rect x="8" y="40" width="12" height="8"/><rect x="8" y="58" width="12" height="8"/><rect x="8" y="76" width="12" height="8"/>
+        <rect x="8" y="94" width="12" height="8"/><rect x="8" y="112" width="12" height="8"/><rect x="8" y="130" width="12" height="8"/>
+        <rect x="180" y="40" width="12" height="8"/><rect x="180" y="58" width="12" height="8"/><rect x="180" y="76" width="12" height="8"/>
+        <rect x="180" y="94" width="12" height="8"/><rect x="180" y="112" width="12" height="8"/><rect x="180" y="130" width="12" height="8"/>
+      </g>
+      <rect x="42" y="42" width="50" height="36" rx="2" fill="#6b5ce7"/>
+      <rect x="100" y="42" width="36" height="36" rx="2" fill="#8a62d8"/>
+      <rect x="144" y="42" width="22" height="28" rx="2" fill="#2ec9a0"/>
+      <rect x="42" y="88" width="44" height="36" rx="2" fill="#4a8eff"/>
+      <rect x="42" y="134" width="28" height="24" rx="2" fill="#3ec8e8"/>
+      <rect x="78" y="134" width="32" height="24" rx="2" fill="#e8a838"/>
+      <rect x="118" y="134" width="28" height="24" rx="2" fill="#f0a020"/>
+      <rect x="152" y="120" width="26" height="38" rx="2" fill="#e85a8a"/>
+      <path d="M94 146 L94 100 L160 100" fill="none" stroke="#7CFF6B" stroke-width="1.4"/>
+      <circle cx="94" cy="146" r="3" fill="#7CFF6B"/>
+    </svg>
+    <div>
+      <div class="eyebrow">RTL  →  GDSII</div>
+      <h1>数字后端 <span>PD</span> 工作流</h1>
+      <p class="sub">把综合之后的门级网表，经过导入、检查、floorplan、电源、摆放、时钟树、布线与签核，收敛成可交付 foundry 的版图。本教程按真实工序做动画，便于指着画面讲面试题。设计统计为示例，命令为工具风格示意。</p>
+      <div class="cover-stats">
+        <div><strong>15</strong><span>流程步骤</span></div>
+        <div><strong>9</strong><span>宏单元 · 示例</span></div>
+        <div><strong>263</strong><span>标准单元 · 示例</span></div>
+      </div>
+      <button class="enter" id="btnEnter" type="button">进入学习 →</button>
+      <div class="fine">Enter 进入 · 左右方向键翻步 · Space 暂停 · R 重放 · F 全屏 · Home / End</div>
+    </div>
+  </div>
+</div>
+<script>
+/* ========== 步骤数据（文字自写，命令为示意） ========== */
+const STEPS = [
+{
+  id:1, nav:"流程总览", title:"引言 / 总览", en:"The Big Picture",
+  stage:"数字后端主流程 · 迭代收敛",
+  lead:"Physical Design 的目标，是把综合后的门级网表，在满足时序、功耗、可制造性的前提下，收敛成可交给 foundry 的 GDSII。流程看起来像一条流水线，真实项目几乎一定会被 QA 门禁打回，在 floorplan、时钟和拥塞之间反复迭代。",
+  inputs:["综合后的门级网表与 SDC","工艺库 lib / LEF / techlef","Foundry 设计规则与签核清单"],
+  outputs:["一条可迭代的 PR 主流程","每一步的 QA 门禁意识","对 PPA 三角形的整体判断"],
+  actions:[
+    "先建立主流程直觉：综合 → 导入检查 → floorplan / 电源 → placement → CTS → 布线 → 提取 / STA / PV → 流片。",
+    "把每一步看成「做完必须过门禁」：拥塞、IR drop、setup/hold、DRV、DRC/LVS 任何一项不过关都可能退回。",
+    "同时盯住 PPA：Power、Performance、Area 互相牵扯，改时序往往加缓冲、加宽电源，面积和功耗会跟着动。"
+  ],
+  why:"面试官很少只问某一条命令，更常问「你怎么排这套流程、哪一步最容易把项目做死」。先把迭代关系讲清楚，后面每一问才有落点。Floorplan 一旦 macro 通道、IO 和电源骨架不对，后面的工具再跑也很难救回来。",
+  pits:[
+    {t:"把流程当成一次性直线", d:"真实项目会在 placement 拥塞、CTS 后 hold、route DRC 之间来回退。只会背顺序、不会判断该退到哪一步，是常见扣分点。"},
+    {t:"只谈工具、不谈门禁", d:"工具版本会换，方法学相对稳定。每一步要能说出「看什么报告、什么叫过关」。"},
+    {t:"忽略 PPA 权衡", d:"为了 setup 无脑插 buffer 或为了 IR 把 stripe 铺满，都会牺牲面积和拥塞。要能说出你优先保哪一个。" }
+  ],
+  tools:"# 本步以方法学为主，后续步骤给出工具风格示意命令\n# 常见分工：Genus 综合 → Innovus P&R → StarRC 提取 → PrimeTime STA → Calibre DRC/LVS",
+  toolTags:["方法学","Genus","Innovus","PrimeTime","Calibre"],
+  legend:"",
+  qa:[
+    {q:"为什么常说 floorplan 决定后面八成成败？", s:"macro 通道、IO、电源骨架一旦定错，拥塞和时序很难靠后期优化挽回。", a:"Floorplan 决定了 die/core 尺寸、IO 与 bump 对应、macro 位置与通道、电源环/条的骨架，以及 blockage/halo。后面 placement、CTS、routing 都是在这张「场地平面图」里自动求解。SRAM 若把关键总线通道堵住，或模拟 IP 没按隔离摆放，工具再怎么 place_opt、route 也变不出布线资源。面试时可用仓库比喻：货架（macro）和卸货口（IO）先定位，叉车通道（routing channel）必须提前留够。"},
+    {q:"PPA 三角形在 PR 里怎么体现？", s:"时序、功耗、面积互相挤压，改一个往往要还另外两个。", a:"Performance 要看 setup WNS/TNS、频率能否收；Power 看泄漏、动态功耗和 IR drop；Area 看 utilization、macro 间距和是否还要涨 die。例如 setup 不够可能要 upsize / 插 buffer / 降 Vt，单元变大、泄漏上升、局部拥塞变差。IR drop 不够要加 stripe 或 decap，又会占轨资源和面积。面试要能举出你实际做的一次权衡，而不是只背三个单词。"},
+    {q:"过不了 QA 该退到哪一步？", s:"先定位是约束、结构还是物理资源问题，再决定回退点。", a:"约束问题（clock 没定义、false path 漏了）应回到 SDC / MMMC，不必先改 floorplan。结构问题（macro 挡住主干、IO 对侧过远、utilization 过高）要退到 floorplan 甚至涨核。局部 setup 可在 post-CTS / post-route 优化；若 CTS 后仍大面积 hold/setup 同时烂，常是 skew 目标或时钟结构不对。拥塞地图若在 placement 已红，不要指望 routing 奇迹清 DRC。"},
+    {q:"广立微 / 亿瑞芯一类数字后端 PR 岗常问什么？", s:"流程闭环、签核意识，以及能讲清时序/电源/版图规则，而不只是点按钮。", a:"这类岗位通常做数字芯片物理实现与签核，面试会追问 setup/hold 修复差异、CTS skew/latency、IR drop 与 EM、天线修复、OCV/AOCV、DRC 与 LVS 的区别、MMMC、DRV、拥塞与 utilization。能指着流程说「这一步物理上发生了什么、报告看哪几项、失败回退到哪」，比背 GUI 路径更有说服力。" }
+  ]
+},
+{
+  id:2, nav:"逻辑综合", title:"逻辑综合", en:"Logic Synthesis",
+  stage:"逻辑综合管线 · RTL → 门级网表",
+  lead:"综合把 RTL 变成目标工艺上的门级网表。先在时序约束下做逻辑优化，再映射到标准单元，并在面积、功耗、可测性之间折中。后端拿到的 .v / .sdc 质量，很大程度在这一步就定了。",
+  inputs:["RTL（.v / .sv，含综合子集）","时序约束 .sdc（时钟、IO delay、例外）","目标库 .lib（多 Vt、典型/快慢角）","可选：粗 floorplan / 物理引导"],
+  outputs:["门级网表 .v","更新后的 .sdc","QoR 报告（面积/时序/功耗）","scan 信息（若做 DFT）"],
+  actions:[
+    "读入 HDL 与库，elaborate 出设计层次，link 到目标工艺库。",
+    "syn_generic：在工艺无关层面做逻辑优化（常数传播、冗余消除、结构重组）。",
+    "syn_map：映射到具体标准单元，选择驱动强度与 Vt。",
+    "syn_opt：按 SDC 做时序驱动优化，插 buffer、调整尺寸，收敛 setup；必要时插入 scan。"
+  ],
+  why:"后端不能把综合网表当成黑盒。高扇出、超大 combo 云、缺时钟定义、错误的 I/O delay，都会在 placement 之后变成无法收的时序或拥塞。理解 RTL→generic→mapped 三阶段，才能和前端/DFT 一起定位问题出在描述还是约束。",
+  pits:[
+    {t:"用理想时钟综合，却把结果直接当物理真相", d:"综合阶段线延往往是线负载模型或粗略物理引导，和 CTS/布线后的 RC 会有差距。不要用综合 WNS 代替签核。"},
+    {t:"约束不完整就开映射", d:"漏 create_clock、输入口 delay、false path，工具会空卷一些路径、放过另一些，网表表面好看，进 PR 后翻车。"},
+    {t:"无节制用 LVT / 超大驱动", d:"setup 是好了，泄漏和拥塞一起涨，后端很难再往回收。" }
+  ],
+  tools:"# Genus 风格示意（非完整脚本）\nread_libs ss_125c.lib\nread_hdl -sv mini_cpu.v\nelaborate mini_cpu\nread_sdc mini_cpu.sdc\nsyn_generic\nsyn_map\nsyn_opt\nreport_timing; report_qor\nwrite_hdl > top.v\nwrite_sdc > top.sdc",
+  toolTags:["Genus 示意"],
+  legend:"灰色：generic 逻辑　彩色：映射后的标准单元　红框：DFF",
+  qa:[
+    {q:"syn_generic 和 syn_map 有什么不同？", s:"前者做工艺无关逻辑优化，后者才落到目标库单元。", a:"syn_generic 在 GTECH / generic 层面化简布尔网络，还不绑定某家 foundry 的 INVX1、NAND2 等。syn_map 才按 .lib 的延迟、面积、功耗把逻辑映射成真实标准单元，并开始选 drive strength 与 Vt。syn_opt 再基于 SDC 做时序驱动的 sizing、buffering。面试时不要把「综合」说成只有一步映射。"},
+    {q:"综合时的 wire load 和后面 RC 提取是一回事吗？", s:"不是。综合常用统计线负载或粗略物理估计，签核必须用提取后的 SPEF/SDF。", a:"没有详细布线时，综合器无法知道每条网的真实拓扑和耦合。它用 wire-load 或 physical-aware 估计，用来指导结构优化。进 PR 后，寄生由 StarRC 一类工具按实际几何提取。所以综合过时序只是入场券，签核以 post-route STA 为准。"},
+    {q:"高扇出网在综合阶段怎么处理？", s:"用缓冲树拆分负载，否则 max_fanout / max_cap 和延迟都会爆。", a:"时钟通常留给 CTS，不要在综合里把时钟综合成普通缓冲树（除非特殊方法学）。数据通路上的高扇出（复位、使能、总线）应由综合插 buffer / inverter tree，把 max_fanout、max_cap 压进库限。若综合放过，placement 后会出现 DRV 和难以收敛的 setup。" }
+  ]
+},
+{
+  id:3, nav:"设计导入", title:"设计导入", en:"Design Import",
+  stage:"设计导入 · 建立可查询的设计库",
+  lead:"把网表、时序约束、工艺库和物理库读进 P&R 工具，对齐逻辑、电气、物理三套信息，得到一份可查询的设计数据库。导入成功不等于设计健康，只代表工具已经能「看见」这些数据。",
+  inputs:["门级网表 top.v","时序约束 top.sdc","时序库 .lib（多角）","物理库 .lef / tech LEF","MMMC 配置（corner × mode）"],
+  outputs:["内存中的设计数据库","init / check 日志","后续 floorplan 的起点"],
+  actions:[
+    "读网表与 LEF，把每个单元的逻辑引脚和物理 pin、尺寸绑定起来。",
+    "读 SDC，建立时钟、I/O 延迟、例外路径和设计规则约束。",
+    "配置 MMMC：把工艺角 corner 与工作模式 mode 组合成若干 analysis view。",
+    "跑一致性检查：库是否齐全、有无未约束端口，但深度网表检查放在下一步。"
+  ],
+  why:"网表说「有这些连接」，LEF 说「单元长什么样、pin 在哪」，SDC 说「哪些路径要多快」。三套数据往往来自不同团队：前端给网表和 SDC，foundry/IP 给 lib/LEF。对不齐，后面的摆放和时序都是在错误模型上优化。",
+  pits:[
+    {t:"lib 和 LEF 版本不一致", d:"时序模型是 7.5 轨单元，LEF 却是另一套高度，legalization 和抽取都会错。"},
+    {t:"MMMC 只建了一个慢角", d:"只做 ss setup、不做 ff hold，会把 hold 问题留到签核才爆。"},
+    {t:"导入报 warning 一律忽略", d:"未解析的单元、未约束的端口、缺失的 clock 往往就藏在 warning 里。" }
+  ],
+  tools:"# Innovus 风格示意\nset init_verilog top.v\nset init_top_cell mini_cpu\nset init_lef_file {tech.lef stdcell.lef macro.lef}\nset init_mmmc_file mmmc.tcl\ninit_design\n# mmmc.tcl 中典型调用：create_library_set / create_rc_corner /\n# create_delay_corner / create_constraint_mode / create_analysis_view / set_analysis_view",
+  toolTags:["Innovus 示意"],
+  legend:"文件落入设计库后出现「设计数据已建立」",
+  qa:[
+    {q:"MMMC 里的 corner 和 mode 有什么差别？", s:"corner 描述工艺/电压/温度与 RC 角，mode 描述功能或测试约束。", a:"Corner（或 delay corner）绑定 PVT 与 RC：例如 ss_0p81v_125c + Cmax 用来做 setup，ff_0p99v_m40c + Cmin 用来做 hold。Mode（constraint mode）是不同 SDC：func、scan_shift、sleep 的时钟、例外路径都不一样。Analysis view = constraint mode × delay corner。一颗手机芯片常有「高性能 / 省电」模式，再乘多个工艺角，view 数量会很快膨胀，必须按签核清单取交集，而不是只跑一个慢角。"},
+    {q:"为什么导入时必须同时有 lib 和 LEF？", s:"lib 给延迟和功率，LEF 给外形与 pin 几何，缺一不可。", a:"STA 和优化看 .lib 的 timing/power arc；placement、合法化和布线看 LEF 的 SIZE、PIN、OBS、site。没有 LEF，工具无法把实例放到 row 上；没有 lib，无法估算时序。Macro 还要有对应的 .lib 与 LEF（以及后续抽取用的模型）。二者版本、单元名单必须对齐。"},
+    {q:"init_design 成功是否等于可以开始 floorplan？", s:"只说明数据读进来了，仍要看检查报告再往下走。", a:"init_design 过了只代表网表、库、MMMC 能链接。还需要确认顶层端口都有 direction、时钟已创建、没有 missing cell、SDC 没有大面积未约束。下一步的网表检查就是专门做这件事。一路 ignore warning 是面试减分项。" }
+  ]
+},
+{
+  id:4, nav:"网表检查", title:"网表检查", en:"Netlist Check",
+  stage:"网表检查 · 找出浮动与不一致",
+  lead:"在动 floorplan 之前，先确认网表在逻辑上可实现：没有悬空、多驱、应连未连、未时钟的寄存器，以及明显的约束空洞。这一步抓到的问题，越往后代价越大。",
+  inputs:["已导入的设计数据库","SDC 与 MMMC view","检查项清单（方法学）"],
+  outputs:["checkDesign / check_timing 报告","需前端修复或可接受的 waivers","「可以开始 floorplan」的结论"],
+  actions:[
+    "跑结构性检查：floating net、undriven input、multi-driven net、悬空输出、组合环。",
+    "检查时序对象：有无无时钟寄存器、未约束端口、冲突的 set_false_path / multicycle。",
+    "核对层次与 DFT：scan 链端口、测试模式是否与网表一致。",
+    "把必须修的问题退回前端或综合，而不是在 PR 里用 tie 单元草率堵上。"
+  ],
+  why:"P&R 工具会把能摆的单元都摆下去。若复位网实际是 floating、或两个驱动同时打一条总线，后面的时序和 LVS 会非常难看。先在逻辑层面把网表「做干净」，floorplan 才有意义。",
+  pits:[
+    {t:"用 tie-high / tie-low 掩盖未连输入", d:"有些是真的常值，有些是前端漏连。不核对功能就 tie 掉，会留下硅错误。"},
+    {t:"放过 multi-driven", d:"除了开漏或特殊总线，多驱通常是层次连接错误，必须查清。"},
+    {t:"check_timing 的 no-clock 当小 warning", d:"没有时钟的 DFF 不会被正确分析，等价于这部分逻辑没有签核。" }
+  ],
+  tools:"# Innovus / 时序检查 示意\ncheckDesign -all -nohtml -outfile checkdesign.rpt\ncheck_timing -verbose > check_timing.rpt\n# 关注：floating / undriven / multidriven / loop / no-clock / unconstraint ports",
+  toolTags:["Innovus 示意"],
+  legend:"红标记：违例　绿标记：已通过或已解释",
+  qa:[
+    {q:"floating 和 undriven 有何不同？", s:"floating 多指网没有驱动或未用，undriven 强调输入没有源。", a:"不同工具用词略有出入。常见约定是：undriven input 指单元输入 pin 没有连到有效驱动；floating net 指一条网没有任何驱动、或驱动/负载都不完整（例如只连了一截）。出现时要先看是不是应接到电源的 tie、未使用的 IP 端口，还是层次例化时端口漏连。不能一律插 tie 单元。"},
+    {q:"为什么组合环要在进入 PR 前处理？", s:"环会让时序分析无起点，优化也会迷失。", a:"故意的环（如 RS 锁存、某些异步电路）必须用约束或 set_disable_timing 明确告诉工具。意外的环往往是 RTL 笔误或综合错误。带着意外环去做 placement，STA 会报 loop，路径无法收敛。"},
+    {q:"哪些检查可以 waiver，哪些必须修？", s:"有文档的非常规结构可以 waiver，多驱、无时钟、关键 floating 必须修。", a:"waiver 要有设计意图说明（例如模拟宏的某些探测脚、DFT 专用端口）。功能相关的 multi-driven、关键复位/时钟网 floating、大量 no-clock flop，都应阻断进入 floorplan。面试时要能说出你的门禁红线，而不是「报告里有 warning 但我们继续了」。" }
+  ]
+},
+{
+  id:5, nav:"布局规划", title:"IO Pad 与布局规划", en:"Floorplan",
+  stage:"布局规划 · IO pad 环与 macro 落位",
+  lead:"确定 die / core 尺寸与长宽比，沿芯片边缘放下 IO pad，再把 SRAM、PLL、模拟 IP 等 macro 按规划放到固定位置，并留出布线通道与 halo。这是整个后端里人工决策最重的一步。",
+  inputs:["干净网表与 SDC","IO 列表与封装 / bump 约束","macro 尺寸、方向、电源与隔离要求","目标 utilization 与 aspect ratio"],
+  outputs:["带 die/core、pad、macro 的 DEF","halo / blockage / 通道规划","后续电源与摆放的场地"],
+  actions:[
+    "按 IO 数量、利用率与封装约束确定 die/core 尺寸和边距。",
+    "沿 die 边缘按 PCB / bump 顺序放置 IO pad，形成 pad 环。",
+    "将 macro 按经验规则落位：存储器靠外、模拟/PLL 隔离、相关数字宏就近。",
+    "加 placement halo、channel、endcap / well tap 规划位置，必要时预留 spare 区域。"
+  ],
+  why:"标准单元还可以让工具挪，硬宏几乎「放下就定」。通道窄了会拥堵，IO 到内核过远会让关键接口时序变差，PLL 与数字噪声没隔离会在硅上出问题。这一步做对，后面自动化才有空间。",
+  pits:[
+    {t:"利用率定得太满", d:"例如一上来 80%+ 还塞满 macro，没有给 CTS buffer、hold delay cell 和 reroute 留余地。"},
+    {t:"macro 贴太近或挡住主干道", d:"两个 SRAM 之间不留 channel，总线和时钟都会在夹缝里打架。"},
+    {t:"只看面积不看封装", d:"pad/bump 顺序和内核功能区错位，等于把关键接口绕到芯片对面。" }
+  ],
+  tools:"# Innovus 风格示意\nfloorPlan -site core -s 1200 900 30 30 30 30\n# 或：floorPlan -r 0.7 0.65 30 30 30 30   ;# 利用率与长宽比需按项目算\n# IO：按 pad cell / bump 约束放置（命令随方法学而异）\naddHaloToBlock -allMacro 8 8 8 8\n# addEndCap / addWellTap 常在电源或 placement 前后按库要求插入\nsetPlaceMode -hardFence true\ndefOut floorplan.def",
+  toolTags:["Innovus 示意"],
+  legend:"色块为 macro　外围金黄块为 IO pad　虚线为核心区　halo 区域不让标准单元进入",
+  qa:[
+    {q:"utilization 一般怎么取，为什么不能太满？", s:"要给时钟缓冲、hold 修复、ECO 和布线留空，经验常从 60%–75% 起评估。", a:"Utilization = 标准单元面积 / 可摆放面积（core 减去 macro 与硬 blockage）。数字看起来能到 80%，但 CTS 要插 buffer，post-CTS hold 要插 delay cell，route 后可能还要 upsizing，spare cell 也要占位。宏之间还要通道。定太满，placement 合法化失败或拥塞爆炸。具体目标看工艺与库（多 Vt、多 bit），要用拥塞图而不是只看一个百分比。"},
+    {q:"macro 摆放有哪些常用规则？", s:"周边放置、相关宏成组、给通道、模拟要隔离。", a:"常见做法：大块 SRAM/ROM 沿 core 四周或按数据流成组，避免把芯片拦腰截断；宏与宏、宏与 core 边缘留 routing channel；halo/blockage 防止标准单元贴到宏 pin 上；PLL、ADC 等模拟宏远离数字热区并注意电源隔离；与 IO 强相关的 PHY 靠近对应 pad。没有放之四海的坐标，但要能解释你的通道和数据流方向。"},
+    {q:"well tap、endcap 是做什么的？", s:"保证阱电位与行端工艺完整性，不是用来实现逻辑。", a:"Well tap（tap cell）按规则间距把 N-well / P-sub 接到 VDD/VSS，防止闩锁、保证体电位。Endcap 放在 site row 两端，把阱和注入层收干净，满足 foundry 对行端的 DRC。它们通常在 floorplan 或 placement 前按阵列插入，不要等到 DRC 后期才补。" }
+  ]
+},
+{
+  id:6, nav:"电源规划", title:"电源规划", en:"Power Planning",
+  stage:"电源规划 · Ring / Stripe / Rail / Decap",
+  lead:"先在 core 周围铺电源环，再拉垂直/水平 stripe 形成网格，然后用 follow-pin / sroute 把标准单元的电源轨接到网格，并在合法位置插入 decap。目标是把 IR drop 和电迁移控制在签核限内，同时少占布线资源。",
+  inputs:["已落位的 floorplan","功耗估计或功耗图","tech 允许的电源层、线宽与通孔规则","IR / EM 签核标准"],
+  outputs:["PG ring / stripe / rail 结构","decap 规划","PG 连通性检查起点"],
+  actions:[
+    "addRing：在 core 周围用高层金属做 VDD/VSS 双环。",
+    "addStripe：按节距拉垂直、水平电源条，形成网格；遇到 macro 要搭桥或绕开。",
+    "sroute follow-pin：把 row 上的电源轨（通常 M1）与 stripe 打通。",
+    "在电流热点预留/插入 decap，并做 PG connectivity、shorts 检查。"
+  ],
+  why:"标准单元再省电，电流也要经金属网格从 pad 流进来。网格太疏或被 macro 切断，边角和热区就会 IR drop，时序模型里的电压不再成立；网格太密又抢走信号布线轨道。电源是骨架，应在 placement 之前基本定型。",
+  pits:[
+    {t:"stripe 被 macro 切断却没搭桥", d:"看起来画了格子，实际某些区域是断的，IR 和 EM 会在断口集中。"},
+    {t:"只看静态 IR，不管动态", d:"平均电流合格，时钟沿同时翻转时仍可能瞬间跌破电压。"},
+    {t:"跟着 decap 当面积填缝", d:"decap 能缓解动态跌落，但不能替代足够的金属截面积；也要注意泄漏和密度规则。" }
+  ],
+  tools:"# Innovus 风格示意\naddRing -nets {VDD VSS} -type core_rings -around core \\\n  -layer {top M9 bottom M9 left M8 right M8} -width 4 -spacing 2 -offset 2\naddStripe -nets {VDD VSS} -layer M7 -direction vertical \\\n  -width 3 -spacing 6 -set_to_set_distance 96\naddStripe -nets {VDD VSS} -layer M8 -direction horizontal \\\n  -width 2.5 -spacing 6 -set_to_set_distance 140\nsroute -connect {corePin}\nverifyConnectivity -type all -error 1000 -report pg.rpt\n# 电源短路按方法学检查 PG shorts",
+  toolTags:["Innovus 示意"],
+  legend:"红：VDD　蓝：VSS　环先于条　细横线为 follow-pin rail　亮点为 decap",
+  qa:[
+    {q:"静态 IR 和动态 IR 有什么区别？", s:"静态看平均电流在电阻上的压降，动态看瞬间电流和电感/电容效应。", a:"静态 IR（或平均 IR）用平均功耗和 PG 电阻网络算 ΔV，适合看网格是否够粗、通路是否连续。动态 IR 关注时钟沿附近大量触发器同时翻转（di/dt），封装电感、片上电容和局部电阻一起作用，电压会瞬间下冲。动态问题要靠 decap、降低同时翻转、加强局部 stripe，而不是只把平均 IR 做到 5% 就结束。面试要能分开讲这两种机制。"},
+    {q:"电迁移 EM 和 IR drop 是同一件事吗？", s:"不是。IR 是压降，EM 是金属在长期电流密度下的可靠性。", a:"IR drop 影响当下的电压和时序；EM 是金属原子在高电流密度下迁移，长期可能开路或空洞。修 IR 有时加宽、加密 stripe，这通常也有利于 EM，但通过 IR 不等于通过 EM。还要看经由阵列、最窄的 follow-pin、corner 处电流是否超 foundry 限。签核通常两份报告都要看。"},
+    {q:"decap、filler、tap cell 分别干什么？", s:"decap 提供局部电容，filler 填行并连续阱，tap 给阱偏置。", a:"Decap 是接在 VDD-VSS 之间的电容单元，抑制动态 IR，常插在热区和合法空隙。Filler 把 row 上剩下的空隙填上，保证 nwell/implant/poly 连续并满足密度。Tap/well tap 按最大间距把阱接到电源，防闩锁。三种单元都占 site，但不能互相替代：用 filler 填满并不等于动态 IR 已有足够电容。" }
+  ]
+}
+];
+const STEPS_REST = [
+{
+  id:7, nav:"标准单元摆放", title:"标准单元摆放", en:"Placement",
+  stage:"Placement · 标准单元在 row 上落位",
+  lead:"在已经固定的 macro、halo 和电源网格之间，把标准单元摆到 site row 上。先做全局粗摆以缩短线长、满足时序，再优化拥塞与驱动，最后 legalize 到合法格点。macro 周围的 halo 必须留空。",
+  inputs:["带电源的 floorplan DEF","时序约束与 MMMC","标准单元 LEF（含 site row）","拥塞 / utilization 目标"],
+  outputs:["Placed DEF","早期时序（setup WNS/TNS）","拥塞图与密度图"],
+  actions:[
+    "Coarse placement：在 row 上给出单元的大致位置，优化线长与时序。",
+    "优化：调整单元大小、插必要 buffer，平衡 setup 与拥塞。",
+    "Legalization：对齐 site、消除重叠，避开 macro halo 与 blockage。",
+    "拥塞处理：cell padding、局部减密、引导绕开热点，而不是把单元塞进 halo。"
+  ],
+  why:"Placement 是在时序、拥塞、密度三场约束里找解。放得太挤，后面布不通；为了稀松而把相关逻辑拆散，setup 又会变差。这一步之后，时钟树和布线都在既定位置上生长，所以要先看拥塞图再往下走。",
+  pits:[
+    {t:"不看拥塞图就进 CTS", d:"红区已经溢出，时钟树再插 buffer 会更挤，布线阶段会集中爆 DRC。"},
+    {t:"允许工具把单元推进 halo", d:"宏 pin 周围被堵住，宏接口时序和电源都会受影响。"},
+    {t:"过早堆大量 hold buffer", d:"CTS 前时钟仍是理想 skew，此时插一堆 delay cell 常常是浪费，还会恶化拥塞。" }
+  ],
+  tools:"# Innovus 风格示意\nplace_opt_design\n# 或分步：placeDesign ; optDesign -preCTS\ntimeDesign -preCTS\nreport_timing\n# 拥塞与密度：congAnlyz / setPlaceMode -maxDensity 等按方法学使用\ndefOut placed.def",
+  toolTags:["Innovus 示意"],
+  legend:"细色块为标准单元　宏周围暗带为 halo，保持空置　红区示意拥塞",
+  qa:[
+    {q:"congestion 和 utilization 是什么关系？", s:"利用率高更容易挤，但拥塞还取决于引脚密度和通道。", a:"Utilization 是面积占比；congestion 是某区域布线需求相对轨道供给是否溢出。即使整体利用率只有 65%，一条被 macro 夹住的通道、或一堆高引脚密度的组合逻辑，仍会局部拥堵。反过来，均匀的中等利用率可能很好布。所以不能只报一个 utilization 数字，要看拥塞热力图、overflow，以及 macro 通道是否够宽。"},
+    {q:"为什么 CTS 之前一般不把 hold 修死？", s:"此时时钟是理想的，真实 skew 还没出现，提前堆 delay 常是浪费。", a:"Hold 检查对时钟偏差极其敏感。理想时钟下，只有「数据路径短到连本征 hold 都不够」的路径才值得留意。大量 hold 违例会在真实时钟树长出来之后才出现（capture 比 launch 更早到）。预 CTS 若疯狂插 delay cell，既占面积，CTS 后还可能要拆掉重来。方法学上通常把 hold 的主力修复放在 post-CTS。"},
+    {q:"legalization 失败常见原因？", s:"密度过高、blockage 过多或行高/站点不匹配。", a:"工具必须把每个标准单元放到匹配的 site（高度、方向、脱位规则），且不重叠、不进入 hard blockage 与宏 halo。利用率过高、padding 过狠、或电源轨/tap 把行切碎，都会导致无法合法化。应回到密度目标、halo 宽度或 floorplan，而不是强行 overlap。" }
+  ]
+},
+{
+  id:8, nav:"时钟树综合", title:"时钟树综合", en:"Clock Tree Synthesis",
+  stage:"时钟树综合 · 从 root 向外生树",
+  lead:"从时钟定义点（本示例为 CPU_CLK_MGR 的时钟输出口，与 PLL 对齐）向外生长缓冲树，把时钟送到每一个 sink。目标是各寄存器到达时间尽量一致（skew 小），同时控制插入延迟（latency / insertion delay），并满足时钟网上的 DRV。",
+  inputs:["Placed DEF","时钟约束与 CTS spec（目标 skew、buffer 列表、NDR）","时钟关系 / 例外"],
+  outputs:["带时钟树的 DEF","skew / latency / clock DRV 报告","clock gate 与 sink 的实际结构"],
+  actions:[
+    "分析时钟结构：主时钟、生成时钟、clock gate，选定 root 与缓冲单元类型。",
+    "设定 CTS 目标：skew、最大 insertion delay、屏蔽（shielding）或 NDR。",
+    "从 root 向外分层插入 clock buffer / inverter，按区域做 H-tree 或平衡树。",
+    "检查各 clock group 的 skew、latency，以及时钟网上的 max_tran / max_cap。"
+  ],
+  why:"时钟是芯片上扇出最大、对偏斜最敏感的网。树没长出来之前，STA 用理想时钟，很多 hold 看不见、setup 也偏乐观或偏差。CTS 既决定能否跑到目标频率，也决定后面 hold 修复的工作量。",
+  pits:[
+    {t:"只追求全局 skew 最小", d:"把不相关的时钟域或相距很远的 sink 强行拉齐，会换来很大的 latency 和功耗。更应关注有时序关系的局部 skew。"},
+    {t:"时钟线不加约束就当普通信号布", d:"易受串扰，delta delay 会直接变成 skew。常用 NDR 加宽、加大间距或 shielding。"},
+    {t:"忽略 clock DRV", d:"时钟沿变缓后，寄存器的 Tcko、Tsu/Th 都会漂移，时序模型失真。" }
+  ],
+  tools:"# Innovus 风格示意\n# 先配置 CCOpt 约束（buffer 列表、target skew 等），再：\nccopt_design\nreport_ccopt_clock_tree_structure\nreport_clock_timing -type summary\ntimeDesign -postCTS",
+  toolTags:["Innovus 示意"],
+  legend:"绿线为时钟树　方块为 clock buffer　橙三角为 DFF sink　CMU 上的点为 clock root",
+  qa:[
+    {q:"skew、latency、insertion delay 怎么区分？", s:"latency/insertion delay 是到达时间，skew 是不同 sink 到达时间之差。", a:"Insertion delay（或 clock latency）是从时钟定义点到某个 sink 的延迟。Skew 是两个 sink（或一组 sink）insertion delay 的差：全局 skew 看最大减最小，局部 skew 看一条 timing path 的 launch 与 capture。STA 里常用 set_clock_uncertainty 作为尚未建树或仍需裕量时的预算，CTS 之后应看真实到达时间，并配合 CRPR 去掉公共路径上的悲观。"},
+    {q:"什么是 useful skew？", s:"有意让捕获或发射时钟早到/晚到，把时间借给困难路径。", a:"不是所有 skew 都有害。若某条路径 setup 很紧，可以让 capture clock 稍晚到达（或 launch 稍早），等于给数据多一点周期；hold 紧则相反，避免 capture 太早。这叫 useful skew。前提是同一对寄存器之间的关系清楚，且不会把问题推到其他路径或破坏 hold。盲目把所有 sink 拉成零 skew，并不总是最优。"},
+    {q:"H-tree 一定最好吗？", s:"对称结构利于平衡，但真实芯片常用结合区域划分的平衡树。", a:"教科书 H-tree 在均匀负载、方形区域里很好看。实际 sink 密度不均、中间还有 macro 开洞，工具会做 fishbone、mesh 或分 cluster 的平衡树，并在主干用低阻金属。面试能画 H-tree 说明对称思想，也要能说「被 macro 切断时要分区、在通道里走主干」。本教程动画用 H-tree 是为了把「从 root 逐级向外、分层插 buffer」讲清楚。" }
+  ]
+},
+{
+  id:9, nav:"时钟树后优化", title:"CTS 后优化", en:"Post-CTS Optimization",
+  stage:"CTS 后优化 · 标出并修复 hold",
+  lead:"时钟树长出后，每个寄存器的到达时间成为现实。此时再做 post-CTS 优化：用真实 skew 修 hold，并继续收 setup 与 DRV。Hold 与时钟频率无关，主力修复放在这一步，正是因为根因常常是时钟偏斜。",
+  inputs:["CTS 后的 DEF","post-CTS 时序报告","允许插入的 delay cell / buffer 列表"],
+  outputs:["修复后的 DEF","hold / setup / DRV 报告","单元数目与密度变化"],
+  actions:[
+    "区分「理想时钟下就存在的短路径」和「由 skew 引入的 hold」。",
+    "对 hold 违例路径插入 delay cell 或适度减小发射路径驱动，把数据推迟到满足 Thold。",
+    "对 setup 用 sizing、缓冲、有用偏斜等手段补时序，避免和 hold 修复互相拆台。",
+    "清理 DRV：max_transition / max_capacitance / max_fanout。"
+  ],
+  why:"必须在 CTS 之后修 hold，是因为大量 hold 违例的根因是时钟 skew：capture 比 launch 先到，数据还没稳住就被采。树没长出来时，这些违例要么看不见，要么修了也是错的位置。把这一问讲透，是数字后端面试的高频得分点。",
+  pits:[
+    {t:"在数据路径上无脑串一长串 buffer 修 hold", d:"面积、功耗和局部拥塞上升，还可能把邻接路径的 setup 修坏。应选合适的 delay cell，并检查附近 setup。"},
+    {t:"用放宽频率或改 period 来「修 hold」", d:"Hold 检查与周期无关（同沿或 min 路径），降频解决不了。"},
+    {t:"修 hold 时破坏了时钟树对称", d:"在时钟网上乱插延时会牵动整个 domain 的 skew，通常优先改数据路径或做受控的 useful skew。" }
+  ],
+  tools:"# Innovus 风格示意\noptDesign -postCTS -hold\noptDesign -postCTS\ntimeDesign -postCTS\nreport_timing -delay_type min\nreport_constraint -all_violators",
+  toolTags:["Innovus 示意"],
+  legend:"红虚线：hold 违例短路径　金黄小块：插入的 delay cell　变绿表示修复",
+  qa:[
+    {q:"为什么 hold 要在 CTS 之后修？与频率无关吗？", s:"是。Hold 不吃周期，真实 skew 只有树长出来才知道。", a:"Setup 约束形态是 launch 延迟 + 组合延迟 + Tsu < 周期 + capture 延迟。把周期加大（降频）可以救 setup。Hold 是 launch 延迟 + 组合最小延迟 > Thold + capture 延迟，两边是同一拍或 min 分析，公式里没有周期，所以降频无效。CTS 前时钟理想、skew≈0，很多因 capture 早到造成的 hold 还没出现；此时插的 delay 位置也往往不对。树长出来后，每个 sink 的 arrival 才确定，再插入 delay cell 才有意义。例外是极短路径在理想时钟下就已经不满足本征 hold，可以记录，但主力仍在 post-CTS。"},
+    {q:"setup 和 hold 的修复手段有何不同？", s:"Setup 要让数据更早到达捕获沿；hold 要让数据不要太早。", a:"修 setup：增大驱动、换 LVT、拆高扇出、缩短关键路径或 reroute，以及让 capture 时钟晚到（useful skew）。不要在关键路径上无脑加 buffer——加重负载的级联会更慢，只有拆负载的缓冲才有帮助。修 hold：在短数据路径上加 delay cell、减小过强驱动、适当绕线，或让 launch 时钟晚到。两者常打架：给短路径加 delay 可能让同一对寄存器的另一条长路径 setup 变差，所以要成对看，并且用 min/max 两个方向的报告验证。"},
+    {q:"DRV 是什么，为什么要和时序一起清？", s:"是库规定的设计规则（沿斜率、负载、扇出），超限则延迟模型不可信。", a:"DRV 通常包括 max_transition、max_capacitance、max_fanout。它们不是某一条 setup path 的 slack，而是单元输出沿和负载必须落在 .lib 表征范围内。超了，STA 的延迟是外推出来的，WNS 好看也不能信。修复靠插 buffer、增大驱动、拆分扇出。Clock 网上的 DRV 尤其敏感，应在 CTS 规格里就限制。" }
+  ]
+},
+{
+  id:10, nav:"布线与天线", title:"布线与天线效应", en:"Routing & Antenna",
+  stage:"布线 · 先全局再详细，处理天线",
+  lead:"先做 global route 分配大概的轨道与层，再做 detail route 在具体轨道上落下金属和过孔。走线必须遵守优选方向，并处理天线效应：等离子刻蚀时过长的金属会在薄栅上积累电荷。",
+  inputs:["Post-CTS DEF","非默认规则 NDR、层优选方向","天线规则（来自工艺文件）","拥塞图"],
+  outputs:["Routed DEF","DRC / 连通性初步报告","天线违例及修复记录"],
+  actions:[
+    "Global route：在粗网格上为网络分配资源和大致走廊，暴露拥塞。",
+    "Detail route：按层的优选方向落下实际金属（常见 M2 横、M3 竖，依工艺而定）。",
+    "检查几何与连通：开路、短路、间距、过孔。",
+    "处理天线：对超限净用跳线 jumper（切断后跳到其他层再回来）或天线二极管放电。"
+  ],
+  why:"再好的摆放，也要金属连起来才是芯片。全局布线告诉你空间够不够，详细布线才产生真实 RC 和 DRC。天线是制造过程问题，功能仿真看不见，但会在流片工艺中打坏栅氧，必须按规则修。",
+  pits:[
+    {t:"全局已经堵死还强行 detail", d:"只会换来大量 DRC 和绕线，应退回 placement / floorplan 腾通道。"},
+    {t:"忽略天线规则", d:"时序和 DRC 间距都过了，foundry 仍可能因 antenna ratio 拒收。"},
+    {t:"手动乱改优选方向", d:"会破坏布线密度和通孔规划，除非方法学明确允许。" }
+  ],
+  tools:"# Innovus 风格示意\nglobalRoute\ndetailRoute\nrouteDesign\nverifyGeometry\nverifyConnectivity\n# 天线修复按工具方法学（jumper / diode），例如 route 相关 antenna 开关\n# 以下为方法学示意，不以不存在的选项为准：\n# 在工艺天线规则加载后，由 detail route 自动插 jumper 或天线二极管",
+  toolTags:["Innovus 示意"],
+  legend:"浅走廊：全局布线　青横线 M2　橙竖线 M3　红闪：天线超限　跳层为 jumper",
+  qa:[
+    {q:"天线效应是怎么产生的，怎么修？", s:"刻蚀时长金属像天线集电，电荷击穿栅氧；用跳线或二极管修。", a:"晶圆在等离子体工艺中，已形成的金属条会收集电荷。若这条金属已经连到 MOS 的栅、却还没有连到扩散区放电通路，天线比（金属面积/栅面积）过大就可能击穿栅氧。这是制造过程问题，不是芯片上电后的天线发射。修复：① jumper / 跳层：把长金属切断，经 via 跳到其它层再回来，使任一单层暴露面积下降；② 天线二极管：在栅附近提供一条到扩散的泄放通路；③ 减少该层连续面积或改到高层后连栅。工具可自动修，但规则和禁止区域要设对。"},
+    {q:"global route 和 detail route 的分工？", s:"前者分配资源与走廊，后者落到具体轨道和过孔。", a:"Global route 把芯片划成 GCell，统计每条边的 track 供给与需求，给出大概路径，是看拥塞和能否布通的早期信号。Detail route 在真实轨道上放线、打 via、遵守间距和优选方向。类比：全局像规划哪几条路走，详细像在路面上画出车线。全局已经 overflow，详细很难「挤着画」还不违例。"},
+    {q:"什么是 SI / crosstalk，布线时怎么减？", s:"邻线耦合改变延迟甚至造成毛刺，用间距、屏蔽、错窗口来减。", a:"两条相邻信号线之间的耦合电容会让攻击线跳变在受害线上产生 delta delay，严重时出现毛刺。CTS 后的时钟尤其怕被并行数据干扰。减轻手段：加大间距、加 shielding（两侧跟电源）、换层、避免长距离平行、用 timing window 避免同时跳变。签核 STA 会打开 SI 分析，不应只看无耦合的延迟。" }
+  ]
+},
+{
+  id:11, nav:"寄生提取", title:"寄生提取 RC", en:"Parasitic Extraction",
+  stage:"寄生提取 · 在走线上叠出 R 与 C",
+  lead:"详细布线之后，金属和过孔不再是理想导线。用提取工具按实际几何算出每段电阻 R 和电容 C（含对地与耦合），写出 SPEF / DSPF，交给 STA 做带寄生的延迟计算。",
+  inputs:["Routed DEF / GDS 几何","工艺提取规则与层叠模型","温度、corner（Cmax/Cmin）"],
+  outputs:["SPEF / 寄生网表","提取日志与关键网检查","供 PrimeTime / 内部 STA 使用的寄生"],
+  actions:[
+    "按 RC corner（例如 Cmax / Ctyp / Cmin）配置提取。",
+    "对信号网提取分布或集总的 R、对地 C 和耦合 C。",
+    "输出 SPEF，并抽查时钟、关键数据网的电容是否在合理范围。",
+    "把寄生读入 STA，替换placement 阶段的粗估计。"
+  ],
+  why:"没有真实寄生，setup/hold 都还是估计值。线阻会让远端沿变缓，线容和耦合会改变延迟。Signoff 必须建立在提取结果上，而不是工具里的虚拟 RC。",
+  pits:[
+    {t:"只用一个 RC 角做签核", d:"Cmax 常配合慢工艺看 setup，Cmin 配合快工艺看 hold，漏一个就会漏一类违例。"},
+    {t:"提取与 STA 的 name / 层次对不上", d:"SPEF 读不进去或大量 unmatched net，等于没提。"},
+    {t:"把提取动画里的集总数字当成真实项目数据", d:"本教程的 R/C 标注仅为示意量级，真实值以工艺与版图为准。" }
+  ],
+  tools:"# StarRC 风格示意\n# 典型通过命令文件调用：\nStarXtract star.cmd\n# star.cmd 中指定 DEF/LEF/GDS、工艺规则、输出 SPEF 及 corner\n# PrimeTime 读入示意：\nread_parasitics design.spef",
+  toolTags:["StarRC 示意","PrimeTime 示意"],
+  legend:"线上的 R 方块为电阻　对地短线为电容　耦合用虚线表示　数值为示意",
+  qa:[
+    {q:"SPEF 里的 R、C 分别影响什么？", s:"R 带来压降和 RC 延迟，C 增加负载并引入耦合。", a:"电阻让连线成为分布 RC，不再是零延迟；长线远端 transition 变差，需要缓冲。电容包括对地和线间耦合：对地 C 加大负载，耦合 C 带来 crosstalk。Setup 常用较大电容角（偏慢），hold 常用较小电容角（偏快、最小延迟更小）。提取时要和 MMMC 的 RC corner 对齐。"},
+    {q:"为什么 post-route STA 必须 read_parasitics？", s:"否则仍在用估计线模型，不能叫签核。", a:"P&R 过程中的 timeDesign 往往用虚拟 RC 或试验提取做迭代，这足够指导优化，但交付前要用签核级提取（如 StarRC）的 SPEF，在 PrimeTime 等签核 STA 里 read_parasitics 后再报告。两边数字有偏差是正常的，要以签核流程为准，并解释差异来源（SI、OCV、版本）。"},
+    {q:"耦合电容不提会怎样？", s:"延迟偏差和毛刺被低估，尤其是时钟与长平行线。", a:"若提取或 STA 关闭耦合，受害线的延迟可能过于乐观或方向错误（加速/减速取决于攻击沿）。时钟上几皮秒的偏差就会变成 skew。签核通常打开 SI 并使用带耦合的 SPEF 或相应模型。" }
+  ]
+},
+{
+  id:12, nav:"时序签核", title:"时序签核 STA", en:"Timing Signoff",
+  stage:"时序签核 · MMMC 下的 setup / hold / DRV",
+  lead:"在签核 STA 中读入寄生，于全部分析 view 上检查 setup、hold 和 DRV，并考虑片上变异（OCV/AOCV/POCV）与公共路径悲观去除（CRPR）。给出能否达到目标频率的结论，而不是只看一个慢角的 WNS。",
+  inputs:["网表 + SDC + 签核库","StarRC 等提供的 SPEF","MMMC 清单（corner × mode）","derate / AOCV / POCV 模型"],
+  outputs:["各 view 的 setup/hold 报告（WNS/TNS/Vio）","DRV 与 constraint 违例","可交付或需 ECO 的结论"],
+  actions:[
+    "建立并冻结签核 view：多 PVT、多 RC 角、多功能/测试模式。",
+    "read_parasitics，设置 OCV/AOCV/POCV 与 CRPR。",
+    "分别做 max（setup）与 min（hold）分析，并报告全部违例。",
+    "对剩余违例分类：真路径、约束问题，还是 SI / derate 过严，再决定 ECO 还是改约束。"
+  ],
+  why:"STA 不是估值游戏。它用模型回答「在最差和最好的合法条件下，采样是否仍满足建立/保持时间」。漏 view、漏 derate、用错 min/max，都会把问题留到硅上。这一步的结论直接决定能不能 tapeout。",
+  pits:[
+    {t:"只用 ss + Cmax 看 setup 就宣布通过", d:"ff + Cmin 的 hold、测试模式时钟、IO 路径都可能还没过。"},
+    {t:"用 set_false_path 把难路径「关掉」", d:"除非功能上确实不存在，否则这是在掩饰，面试和硅上都会被追问。"},
+    {t:"忽略 CRPR，把公共时钟路径的悲观当成真实 skew", d:"过严的 derate 会制造假违例，也可能诱导错误 ECO。" }
+  ],
+  tools:"# PrimeTime 风格示意\nread_verilog top.v\nlink_design mini_cpu\nread_sdc top.sdc\nread_parasitics design.spef\nupdate_timing\nreport_timing -delay_type max\nreport_timing -delay_type min\nreport_constraint -all_violators\nreport_analysis_coverage",
+  toolTags:["PrimeTime 示意"],
+  legend:"品红：setup 关键路径　橙：hold 路径　黄标记：DRV　右上角为 MMMC view 示意",
+  qa:[
+    {q:"OCV、AOCV、POCV 有何递进关系？", s:"从平坦余量，到按深度/距离调整，再到单元级统计。", a:"OCV（On-Chip Variation）用一套固定 early/late derate 去覆盖片上波动，长路径被重复乘以同一系数，往往过严。AOCV（Advanced OCV，也有 path-based / stage-based 形式）让 derate 随路径深度和物理距离变化：级数越多，随机波动越容易平均，系数更放松。POCV（Parametric OCV）或 LVF 用每个单元的延迟分布做统计加法，更接近真实。面试要能说清「为什么还要 derate」：库是典型表征，同一晶圆不同位置的阈值和线宽仍有偏差。"},
+    {q:"CRPR 是什么，为什么要开？", s:"去掉时钟公共路径上被双向悲观加计的那一段。", a:"Clock Reconvergence Pessimism Removal：launch 与 capture 若共享一段时钟树，OCV 不能既让这段走 late 又走 early。CRPR 把公共路径上的悲观减掉，只对分叉之后的部分保持 early/late。不开 CRPR，会出现虚假的 setup/hold 违例，诱使你多插单元。开了也不能替代真实的 skew 分析。"},
+    {q:"WNS、TNS 怎么读？过关标准是什么？", s:"WNS 是最差那条路径的余量，TNS 是所有违例之和。", a:"WNS（Worst Negative Slack）看最痛的一条，决定频率能否达到；TNS（Total Negative Slack）看违例总量，反映要修多少。签核通常要求各 view 的 setup/hold WNS ≥ 0（或达到项目规定的正余量），并且 DRV 清零或仅剩已批准 waiver。只报一个 func-ss 的 WNS 不够。还要看 path group、IO、时钟域交叉和测试模式。" }
+  ]
+},
+{
+  id:13, nav:"物理验证", title:"物理验证", en:"Physical Verification",
+  stage:"物理验证 · 在版图上标记 DRC / LVS / ERC",
+  lead:"用 foundry 提供的规则对版图做物理验证：DRC 看几何是否可制造，LVS 看版图器件与连接是否和网表一致，ERC 看电气隐患。三类问题要能分开解释，不能笼统说「有 DRC」。",
+  inputs:["GDS / OASIS 或等效版图","Foundry 规则组（DRC/LVS/ERC）","用于 LVS 对照的源网表"],
+  outputs:["DRC / LVS / ERC 报告与坐标","需返修的违例分类","清洁或带 waiver 的结论"],
+  actions:[
+    "DRC：检查线宽、间距、包围、通孔、密度、天线等几何规则。",
+    "LVS：从版图提取器件与连接，与源网表比对（短、开、器件类型/参数）。",
+    "ERC：检查浮动阱、井电位、闩锁风险、部分电气间距等。",
+    "按坐标回到版图修复，或补充金属填充、tap，再回归验证。"
+  ],
+  why:"STA 通过只说明「在模型上时序成立」，不说明「这张版图 foundry 能造、并且和你以为的电路是同一张」。DRC 不过无法流片，LVS 不过可能造出另一份电路。这是签核的物理底线。",
+  pits:[
+    {t:"把 LVS 的 short 当成 DRC 间距问题去拉线", d:"两者坐标系都在版图上，但根因不同：一个是规则，一个是连通性与网表对齐。"},
+    {t:"用金属填充前做的密度结果当作最终结论", d:"filler / metal fill / dummy 之后密度和寄生都会变，要在最终版上重跑。"},
+    {t:"waiver 没有 foundry 或负责人签字", d:"未批准的 rule waiver 在 tapeout 审查会被打回。" }
+  ],
+  tools:"# Calibre 风格示意\ncalibre -drc -hier calibre_drc.svrf\ncalibre -lvs -hier calibre_lvs.svrf\n# 电气规则常在 DRC deck 或 Calibre PERC 中：\ncalibre -perc calibre_perc.svrf",
+  toolTags:["Calibre 示意"],
+  legend:"红方：DRC　橙菱：LVS　黄圆：ERC　点击或悬停可看类型",
+  qa:[
+    {q:"DRC、LVS、ERC 的本质区别？", s:"DRC 问能不能造，LVS 问是不是这张电路，ERC 问有没有电气隐患。", a:"DRC（Design Rule Check）对照 foundry 几何规则：最小宽度/间距、via enclosure、密度窗口、天线比等，回答「这版图工艺做不做得出来」。LVS（Layout vs Schematic）把版图提取成网表，与设计网表比器件和连接，回答「造出来的是不是你设计的那张图」——典型失败是 short、open、缺器件、参数不符。ERC（Electrical Rule Check）覆盖浮动阱、缺少 tap、部分高压间距、闩锁等电气问题。三者报告和修复动作都不同，面试时必须分开讲。"},
+    {q:"LVS 常见的 short / open 怎么查？", s:"短是不该连的网连了，开是该连的没连上。", a:"Short：两条逻辑网在某层意外接触，或 via 打到了相邻线；要按 Calibre 给出的坐标追层。Open：本应连通的线在某层断开、via 缺失或 pin 没对上。还有器件不匹配：版图多/少一只管，或宽长与网表不同。宏观 IP 要用正确的抽象或 source，否则会出现整块宏「对不上」。"},
+    {q:"密度规则为什么也算 DRC？", s:"CMP 等工艺要求各层金属/多晶密度落在窗口内。", a:"化学机械抛光需要一定密度和均匀性，太疏或太密都会造成厚度不均，影响电阻甚至可靠性。所以 DRC 包含 density、金属填充（dummy metal）要求。修复靠加 dummy、调整走线，而不是只改一条违例线宽。填充后要重新提取和 STA，因为寄生会变。" }
+  ]
+},
+{
+  id:14, nav:"签核与流片", title:"签核与流片", en:"Signoff & Tapeout",
+  stage:"签核与流片 · 收束为 GDSII 交付包",
+  lead:"把时序、物理、电源完整性和可制造性的签核结论汇总成「能否交付」的决定。通过后补齐 filler、seal ring、dummy metal 和标记层，导出 GDSII / OASIS 并做最终一致性检查，交给 foundry。",
+  inputs:["STA 签核报告","DRC / LVS / ERC / 天线报告","IR drop 与 EM 报告","方法学规定的其它签核项"],
+  outputs:["GDSII / OASIS 交付包","签核清单与 waiver 记录","流片版本标签"],
+  actions:[
+    "逐项确认签核清单：时序、PV、天线、IR/EM、功耗，未关闭项必须有批准。",
+    "芯片收尾：filler、metal fill、seal ring、对准/标记层。",
+    "streamOut 导出 GDSII 或 OASIS，校验层图、顶层结构和只读 IP。",
+    "打版本、归档网表/DEF/GDS/SDC/报告，提交 foundry。"
+  ],
+  why:"前面都是技术动作，这一步是决策与交付。交付后改一层掩模的代价急剧上升。要把「报告都在」变成「每一项都有人签字的结论」，而不是把 GDS 丢出去就算流片。",
+  pits:[
+    {t:"导出前还在改网表却没全套回归", d:"只重跑了 DRC 忘了 LVS 或 STA，是经典事故。"},
+    {t:"GDS 层图与 foundry 映射表不一致", d:"交出去的层不是对方以为的层。"},
+    {t:"把过程中的中间 GDS 当成最终版", d:"缺 fill 或仍是旧 ECO 前版本。" }
+  ],
+  tools:"# Innovus 风格示意\naddFiller -cell {FILL1 FILL2 FILL4 FILL8 FILL16} -prefix FILL\nstreamOut mini_cpu.gds -mapFile streamOut.map -libName mini_cpu -structureName mini_cpu\nverifyGeometry\nverifyConnectivity",
+  toolTags:["Innovus 示意"],
+  legend:"完整版图收束　右上角为 GDSII 交付示意　统计为示例设计",
+  qa:[
+    {q:"tapeout 前最少要关闭哪些签核？", s:"时序、PV、电源完整性和天线，加上项目规定的其它项。", a:"通常包括：各 MMMC view 的 setup/hold/DRV、SI、OCV 策略下的 STA；Calibre DRC/LVS/ERC（含密度与天线）；IR drop（静/动态）与 EM；部分项目还有功耗、DFT 时序、ESD/latch-up 文档。每项要么清零，要么有批准 waiver。缺一项就导出 GDS，是流程失败而不是勇气。"},
+    {q:"GDSII 和 DEF 有何不同？", s:"DEF 是实现过程中的设计交换，GDSII/OASIS 是面向掩模的版图。", a:"DEF（加上 LEF）描述单元、行、布线等，便于工具间交换，但不一定含全部掩模层（如 dummy、某些标记）。GDSII/OASIS 是流片交付的几何数据库，按层号映射到掩模。streamOut 时必须使用 foundry 认可的 layer map。有的流程同时交 OASIS 以减小文件。"},
+    {q:"为什么最终还要再跑一轮验证？", s:"fill、seal ring 和导出过程都可能引入新问题。", a:"加 dummy metal 会改寄生，可能让边缘时序或密度变化；filler 可能碰到 DRC；导出会漏层或翻转变换出错。所以最终 GDS 上还要再跑 LVS/DRC，并用最终寄生重跑关键 STA。这轮过了，才算可交付。" }
+  ]
+},
+{
+  id:15, nav:"ECO 工程改动", title:"ECO", en:"Engineering Change Order",
+  stage:"ECO · spare cell 与金属改动",
+  lead:"流片前后都可能因功能或时序需要改电路。Pre-mask ECO 还可以增删标准单元并改各层；post-mask / metal-only ECO 只能改金属和过孔，必须启用事先埋好的 spare cell。功能改动通常还要用 LEC 做逻辑等价检查。",
+  inputs:["当前 DEF / GDS 与网表","ECO 清单（功能或时序）","预先插入的 spare cell","是否已冻结扩散/多晶等基层"],
+  outputs:["ECO 后的网表与版图","金属改动层（post-mask）","回归后的 STA / DRC / LVS / LEC"],
+  actions:[
+    "判断窗口：pre-mask 可改单元与基层；post-mask 只改金属，动 spare 的输入输出连接。",
+    "用 spare 做与非、缓冲、触发器等补丁，ecoPlace / ecoRoute 限制在允许层。",
+    "功能 ECO 跑 LEC，时序 ECO 回归 STA，并重跑受影响的 DRC/LVS。",
+    "记录改动范围，避免把约束收紧当修复、或引入新的DRC。"
+  ],
+  why:"Spare cell 是布局阶段买的保险。若等到掩模已经做了基层才想起来「再加一只门」，没有备用单元就只能改更多掩模或重新流片。理解 pre-mask 与 post-mask 的边界，是面试里很具体的一道题。",
+  pits:[
+    {t:"布局时不插 spare，到 post-mask 才找空间", d:"基层已定，空站点也长不出新的扩散区，几乎无法再加门。"},
+    {t:"只改网表忘了 LEC 和物理回归", d:"逻辑补丁可能不等价，金属改动可能制造 short 或新天线。"},
+    {t:"用 ECO 掩盖错误约束", d:"约束错了应改 SDC，用补丁堆时间既不诚实也不稳定。" }
+  ],
+  tools:"# Innovus 风格示意\n# 预先在 placement 阶段分散插入 spare（库相关）：\n# 例如 addSpareModule 或脚本按网格摆放 INV/NAND/DFF 并 Tie 输入\necoPlace\necoRoute\n# 形式验证（工具链视项目而定，保持逻辑等价）\n# 回归：report_timing / verifyGeometry / 必要时再提取与 STA",
+  toolTags:["Innovus 示意"],
+  legend:"金黄高亮为启用的 spare　金色金属为 metal-only 改线　基层保持不动",
+  qa:[
+    {q:"spare cell 是干什么的？何时插入？", s:"预埋的未用逻辑门，供后期尤其是金属 ECO 调用。", a:"Spare 通常是分散放置的 INV、BUF、NAND/NOR、少量 DFF，输入先 tie 到固定电平，输出悬空或也按规定处理。布局阶段就要按密度撒好，不能等流片后才「找空位」。Post-mask 时把 spare 的输入改接到需要的信号、输出接到目标网，相当于在不改晶体管层的前提下长出一点新逻辑。数量和类型要根据可能的补丁估计，太少不够用，太多浪费面积和泄漏。"},
+    {q:"pre-mask 和 post-mask ECO 有何限制？", s:"前者可动单元与基层，后者通常只能改金属层。", a:"Pre-mask：掩模尚未全部冻结，可以增删标准单元、改多晶/扩散，再重做局部 place/route，灵活性大，但若已接近 tapeout 仍要全套回归。Post-mask（常说 metal-only）：基层（有源区、多晶、接触孔等）已按掩模做完或已付钱冻结，只能改金属和 via。不能在空的 site 上「长出」新晶体管，只能用已存在的 spare。改动层数越少，改掩模成本越低，但也越难补复杂功能。"},
+    {q:"ECO 之后要回归哪些检查？", s:"逻辑等价、时序、受影响的 DRC/LVS，不能只看那一条路径。", a:"功能改动必须 LEC（或项目规定的形式验证），确认补丁与预期 RTL/网表一致。时序要在相关 view 重跑，防止修了一条 setup 弄坏 hold。金属改动要做局部乃至全芯片 DRC/LVS/天线，因为新 via 和新平行线会引入 short、间距和耦合。不要用更松的 SDC 把违例「修掉」。" }
+  ]
+}
+];
+STEPS.push.apply(STEPS, STEPS_REST);
+/* ========== 工具函数与版图数据 ========== */
+const NS="http://www.w3.org/2000/svg";
+const FONT="'Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif";
+const MONO="'Noto Sans Mono CJK SC','Noto Sans CJK SC',ui-monospace,monospace";
+const DIE={x:72,y:46,w:760,h:526};
+const CORE={x:112,y:86,w:680,h:446};
+const MACROS=[
+  {id:"SRAM_DATA",name:"SRAM_DATA_256x32",kind:"sram",x:122,y:98,w:186,h:116,tip:"SRAM 数据宏（示例）。沿顶部放置，右侧与下侧留出 channel，数据总线从通道走出。Halo 内不摆标准单元。"},
+  {id:"SRAM_INST",name:"SRAM_INST_128x32",kind:"sram",x:324,y:98,w:148,h:116,tip:"SRAM 指令宏（示例）。与数据 SRAM 成组，中间留通道，避免把顶部拦死。"},
+  {id:"ROM_BOOT",name:"ROM_BOOT_64x16",kind:"rom",x:490,y:98,w:116,h:88,tip:"Boot ROM（示例）。体量较小，靠近指令存储，缩短启动代码读取路径。"},
+  {id:"IO_PHY",name:"IO_PHY_USB",kind:"phy",x:628,y:98,w:148,h:98,tip:"USB PHY（示例）。靠近右侧对应 IO pad，缩短高速/模拟接口到焊盘的距离。"},
+  {id:"DSP",name:"DSP_ACCEL",kind:"dsp",x:122,y:250,w:166,h:126,tip:"DSP 加速器硬宏（示例）。放在左侧，与存储器之间留出横向通道。"},
+  {id:"JTAG",name:"JTAG_TAP",kind:"jtag",x:122,y:414,w:138,h:102,tip:"JTAG TAP（示例）。靠近边缘 IO，便于测试访问。"},
+  {id:"CMU",name:"CPU_CLK_MGR",kind:"cmu",x:280,y:414,w:150,h:102,tip:"时钟管理单元 CMU（示例）。本教程的 clock root 从这里出发，把与 PLL 对齐后的时钟分配到全芯片。"},
+  {id:"PLL",name:"PLL_MAIN",kind:"pll",x:500,y:414,w:138,h:102,tip:"PLL 模拟宏（示例）。与 ADC 组成模拟岛，远离数字热区，电源需要隔离。"},
+  {id:"ADC",name:"ADC_SAR_12b",kind:"adc",x:656,y:414,w:120,h:102,tip:"12-bit SAR ADC（示例）。与 PLL 同处模拟岛，避免被数字宏包围。"}
+];
+const KIND_FILL={sram:"#6c5ce7",rom:"#c44ed4",phy:"#2ec9a0",dsp:"#4a8eff",jtag:"#3ec8e8",cmu:"#e8a838",pll:"#f0a020",adc:"#e85a8a"};
+const KIND_STROKE={sram:"#b8b0ff",rom:"#f0b0f8",phy:"#a6ffe4",dsp:"#b0d0ff",jtag:"#b0f0ff",cmu:"#ffe2a0",pll:"#ffd090",adc:"#ffc0d8"};
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function lerp(a,b,t){return a+(b-a)*t;}
+function ease(t){t=clamp(t,0,1);return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+function ph(p,a,b){return clamp((p-a)/(b-a),0,1);}
+function el(tag,attrs,kids){
+  const e=document.createElementNS(NS,tag);
+  for(const k in attrs||{}){
+    const v=attrs[k];
+    if(v==null||v===false) continue;
+    if(k==="textContent") e.textContent=v;
+    else if(k==="tip") e.setAttribute("data-tip",v);
+    else if(k==="inner") e.innerHTML=v;
+    else e.setAttribute(k,v);
+  }
+  (kids||[]).forEach(c=>e.appendChild(typeof c==="string"?document.createTextNode(c):c));
+  return e;
+}
+function txt(x,y,s,o){
+  return el("text",Object.assign({x,y,fill:"#c9d6e0","font-family":FONT,"font-size":11,"dominant-baseline":"middle"},o),[s]);
+}
+function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+function haloBox(m,pad){return {x:m.x-pad,y:m.y-pad,w:m.w+pad*2,h:m.h+pad*2};}
+function inHalo(x,y,w,h){
+  const pad=8;
+  return MACROS.some(m=>{
+    const b=haloBox(m,pad);
+    return x<b.x+b.w && x+w>b.x && y<b.y+b.h && y+h>b.y;
+  });
+}
+function inCore(x,y,w,h){
+  const m=6;
+  return x>=CORE.x+m && y>=CORE.y+m && x+w<=CORE.x+CORE.w-m && y+h<=CORE.y+CORE.h-m;
+}
+
+/* 标准单元预先生成（避开 macro/halo） */
+const CELLS=(function(){
+  const r=rng(20261112), out=[];
+  const rowH=10, gap=1;
+  for(let y=CORE.y+10;y<CORE.y+CORE.h-12;y+=rowH){
+    for(let x=CORE.x+10;x<CORE.x+CORE.w-12;){
+      const w=8+Math.floor(r()*18);
+      const h=7;
+      if(inCore(x,y,w,h)&&!inHalo(x,y,w,h)){
+        const kind=r();
+        let color="#3a5160", typ="combo";
+        if(kind>0.86){color="#c45c6a"; typ="dff";}
+        else if(kind>0.78){color="#3e7a6a"; typ="buf";}
+        else if(kind>0.70){color="#4a6a8a"; typ="aoi";}
+        else color=`hsl(200,18%,${28+r()*16}%)`;
+        out.push({x,y,w,h,color,typ});
+        if(out.length>=320) return out;
+      }
+      x+=w+gap+(r()>0.8?3:0);
+    }
+  }
+  return out;
+})();
+const SPARES=(function(){
+  const r=rng(99), s=[];
+  for(let i=0;i<18;i++){
+    let tries=0,c;
+    do{c=CELLS[Math.floor(r()*CELLS.length)];tries++;}while((c.typ==="spare"||inHalo(c.x,c.y,c.w,c.h))&&tries<40);
+    s.push({x:c.x,y:c.y-1,w:Math.max(10,c.w),h:8,i});
+  }
+  return s;
+})();
+const SINKS=(function(){
+  const dffs=CELLS.filter(c=>c.typ==="dff");
+  const out=[], used={};
+  for(let i=0;i<dffs.length && out.length<16;i+=Math.max(1,Math.floor(dffs.length/16))){
+    const c=dffs[i]; if(!c||used[i]) continue; used[i]=1;
+    out.push({x:c.x+c.w/2,y:c.y+c.h/2,i:out.length});
+  }
+  return out;
+})();
+
+/* 时钟树：从 CMU 顶部 root 出发的对称分支（示意 H-tree） */
+const ROOT={x:355,y:418};
+const TREE={
+  nodes:[
+    {id:"R",x:355,y:418,lv:0},
+    {id:"B0",x:355,y:350,lv:1},
+    {id:"C",x:448,y:278,lv:1},
+    {id:"W",x:240,y:278,lv:2},
+    {id:"E",x:680,y:278,lv:2},
+    {id:"NW",x:240,y:168,lv:3},
+    {id:"SW",x:240,y:368,lv:3},
+    {id:"NE",x:680,y:168,lv:3},
+    {id:"SE",x:680,y:368,lv:3},
+    {id:"NWc",x:340,y:168,lv:4},
+    {id:"NWw",x:170,y:200,lv:4},
+    {id:"NEc",x:580,y:168,lv:4},
+    {id:"NEe",x:760,y:200,lv:4},
+    {id:"SWc",x:340,y:360,lv:4},
+    {id:"SEe",x:760,y:360,lv:4}
+  ],
+  segs:[
+    ["R","B0"],["B0","C"],["C","W"],["C","E"],
+    ["W","NW"],["W","SW"],["E","NE"],["E","SE"],
+    ["NW","NWc"],["NW","NWw"],["NE","NEc"],["NE","NEe"],["SW","SWc"],["SE","SEe"]
+  ]
+};
+function node(id){return TREE.nodes.find(n=>n.id===id);}
+
+/* 电源条坐标 */
+function stripeRects(){
+  const v=[],h=[];
+  const vx0=CORE.x+18, spacing=96;
+  for(let i=0,x=vx0;x<CORE.x+CORE.w-10;x+=spacing,i++){
+    v.push({x:x,y:CORE.y+4,w:5,h:CORE.h-8,net:i%2?"VSS":"VDD"});
+    v.push({x:x+10,y:CORE.y+4,w:5,h:CORE.h-8,net:i%2?"VDD":"VSS"});
+  }
+  const hy0=CORE.y+22, hsp=140;
+  for(let i=0,y=hy0;y<CORE.y+CORE.h-8;y+=hsp,i++){
+    h.push({x:CORE.x+4,y:y,w:CORE.w-8,h:4,net:i%2?"VSS":"VDD"});
+    h.push({x:CORE.x+4,y:y+8,w:CORE.w-8,h:4,net:i%2?"VDD":"VSS"});
+  }
+  return {v,h};
+}
+const STRIPES=stripeRects();
+
+/* 若干信号线（详细布线折线，正交） */
+const NETS=[
+  {id:"n0",layer:"M2",pts:[[300,220],[420,220],[420,300],[540,300]],antenna:false},
+  {id:"n1",layer:"M3",pts:[[200,200],[200,320],[360,320],[360,400]],antenna:false},
+  {id:"n2",layer:"M2",pts:[[150,180],[520,180],[520,250],[700,250]],antenna:true},
+  {id:"n3",layer:"M3",pts:[[600,210],[600,390],[430,390]],antenna:false},
+  {id:"n4",layer:"M2",pts:[[310,260],[310,350],[470,350],[470,400]],antenna:false},
+  {id:"n5",layer:"M3",pts:[[740,220],[740,400]],antenna:false},
+  {id:"n6",layer:"M2",pts:[[180,300],[300,300],[300,240]],antenna:false},
+  {id:"n7",layer:"M3",pts:[[450,160],[450,250]],antenna:false},
+  {id:"n8",layer:"M2",pts:[[560,330],[700,330],[700,400]],antenna:false},
+  {id:"n9",layer:"M3",pts:[[160,360],[160,240],[260,240]],antenna:false}
+];
+function polyLen(pts){
+  let L=0;for(let i=1;i<pts.length;i++){L+=Math.abs(pts[i][0]-pts[i-1][0])+Math.abs(pts[i][1]-pts[i-1][1]);}return L;
+}
+function dstr(pts){return pts.map((p,i)=>(i?"L":"M")+p[0]+" "+p[1]).join(" ");}
+
+const HOLD_PATHS=[
+  {pts:[[330,300],[330,330],[370,330]],fix:[350,322]},
+  {pts:[[500,230],[560,230],[560,250]],fix:[528,222]},
+  {pts:[[200,280],[230,280],[230,310]],fix:[214,272]}
+];
+const SETUP_PATH={pts:[[200,200],[200,300],[360,300],[360,400],[400,400]]};
+
+function clearStage(){const s=document.getElementById("stage");while(s.firstChild)s.removeChild(s.firstChild);return s;}
+function defsFor(svg){
+  const d=el("defs",{},[
+    el("pattern",{id:"grid",width:"28",height:"28",patternUnits:"userSpaceOnUse"},[
+      el("path",{d:"M28 0H0V28",fill:"none",stroke:"rgba(80,160,170,.10)","stroke-width":"1"})
+    ]),
+    el("marker",{id:"arr",viewBox:"0 0 8 8",refX:"7",refY:"4",markerWidth:"7",markerHeight:"7",orient:"auto"},[
+      el("path",{d:"M0 0L8 4L0 8Z",fill:"#7af0e4"})
+    ]),
+    el("marker",{id:"arrY",viewBox:"0 0 8 8",refX:"7",refY:"4",markerWidth:"7",markerHeight:"7",orient:"auto"},[
+      el("path",{d:"M0 0L8 4L0 8Z",fill:"#e8c35a"})
+    ]),
+    el("marker",{id:"arrR",viewBox:"0 0 8 8",refX:"7",refY:"4",markerWidth:"6",markerHeight:"6",orient:"auto"},[
+      el("path",{d:"M0 0L8 4L0 8Z",fill:"#e86b6b"})
+    ]),
+    el("filter",{id:"glow"},[
+      el("feGaussianBlur",{stdDeviation:"2.2",result:"b"}),
+      el("feMerge",{},[el("feMergeNode",{in:"b"}),el("feMergeNode",{in:"SourceGraphic"})])
+    ])
+  ]);
+  svg.appendChild(d);
+  svg.appendChild(el("rect",{x:0,y:0,width:900,height:620,fill:"url(#grid)"}));
+}
+/* ========== 前 4 步独立场景 + 共用版图构建 ========== */
+function roundedChip(svg){
+  svg.appendChild(el("rect",{x:DIE.x-18,y:DIE.y-16,width:DIE.w+36,height:DIE.h+32,rx:8,fill:"#0b121a",stroke:"#1e3340","stroke-width":1.2}));
+}
+function buildPads(g,p){
+  const n=15,pw=16,padH=9;
+  const span=DIE.w-48, step=span/(n-1);
+  for(let i=0;i<n;i++){
+    const t=ease(ph(p,i/n*0.5, i/n*0.5+0.35));
+    const x=DIE.x+24+i*step;
+    const op=t, dy=(1-t)*-8;
+    g.appendChild(el("rect",{x:x,y:DIE.y-4+dy,width:pw,height:padH,rx:1.2,fill:"#c9a227",stroke:"#ffe08a","stroke-width":.6,opacity:op,tip:"IO pad（示例，共 60 个）：沿 die 边缘按封装 / bump 顺序放置，位置受 PCB 约束。",class:"hot"}));
+    g.appendChild(el("rect",{x:x,y:DIE.y+DIE.h-5-(1-t)*-8,width:pw,height:padH,rx:1.2,fill:"#c9a227",stroke:"#ffe08a","stroke-width":.6,opacity:op,tip:"IO pad（示例）：底边焊盘。",class:"hot"}));
+  }
+  const vspan=DIE.h-48, vstep=vspan/(n-1);
+  for(let i=0;i<n;i++){
+    const t=ease(ph(p,i/n*0.5, i/n*0.5+0.35));
+    const y=DIE.y+24+i*vstep;
+    g.appendChild(el("rect",{x:DIE.x-4+(1-t)*-6,y:y,width:padH,height:pw,rx:1.2,fill:"#c9a227",stroke:"#ffe08a","stroke-width":.6,opacity:t,tip:"IO pad（示例）：侧边焊盘。",class:"hot"}));
+    g.appendChild(el("rect",{x:DIE.x+DIE.w-5+(1-t)*6,y:y,width:padH,height:pw,rx:1.2,fill:"#c9a227",stroke:"#ffe08a","stroke-width":.6,opacity:t,tip:"IO pad（示例）：侧边焊盘。",class:"hot"}));
+  }
+}
+function buildMacros(g,p,drop){
+  MACROS.forEach((m,i)=>{
+    const t=drop?ease(ph(p,0.15+i*0.06,0.15+i*0.06+0.22)):1;
+    const gg=el("g",{opacity:t,transform:drop?`translate(0,${(1-t)*-24})`:"",class:"hot",tip:m.tip});
+    gg.appendChild(el("rect",{x:m.x,y:m.y,width:m.w,height:m.h,rx:3,fill:KIND_FILL[m.kind],stroke:KIND_STROKE[m.kind],"stroke-width":1.4,opacity:.92}));
+    gg.appendChild(txt(m.x+6,m.y+14,m.name,{"font-size":10,fill:"#0e1410","font-weight":"700"})); // body; labels redrawn on top later
+    g.appendChild(gg);
+  });
+}
+function buildHalo(g,p){
+  const t=ease(p);
+  MACROS.forEach(m=>{
+    const b=haloBox(m,8);
+    g.appendChild(el("rect",{x:b.x,y:b.y,width:b.w,height:b.h,rx:4,fill:"none",stroke:"#f0a24b","stroke-width":1,"stroke-dasharray":"4 3",opacity:0.45*t,tip:"Placement halo：宏周围禁止摆标准单元，避免堵住宏 pin 与电源。",class:"hot"}));
+  });
+}
+function buildRings(g,p){
+  const t=ease(p);
+  const inset=[[6,6,12,"#e86050","VDD 电源环（高层金属，示意）"],[14,14,8,"#4a86e8","VSS 电源环（示意）"]];
+  inset.forEach(([o,i,w,col,tip])=>{
+    const L=2*((CORE.w-o*2)+(CORE.h-o*2));
+    const dash=L, off=L*(1-t);
+    g.appendChild(el("rect",{x:CORE.x+o,y:CORE.y+o,width:CORE.w-o*2,height:CORE.h-o*2,rx:2,fill:"none",stroke:col,"stroke-width":w,opacity:.9,
+      "stroke-dasharray":dash,"stroke-dashoffset":off,tip:tip,class:"hot"}));
+  });
+}
+function buildStripes(g,p){
+  STRIPES.v.forEach((s,i)=>{
+    const t=ease(ph(p, i/STRIPES.v.length*0.5, 0.5+i/STRIPES.v.length*0.5));
+    const col=s.net==="VDD"?"#e86050":"#4a86e8";
+    g.appendChild(el("rect",{x:s.x,y:s.y,width:s.w,height:s.h*t,fill:col,opacity:.78,tip:s.net+" 垂直 stripe（示意 M7）：向 row 输送电源，被 macro 切断时需搭桥。",class:"hot"}));
+  });
+  STRIPES.h.forEach((s,i)=>{
+    const t=ease(ph(p, 0.35+i/STRIPES.h.length*0.4, 0.55+i/STRIPES.h.length*0.45));
+    const col=s.net==="VDD"?"#e86050":"#4a86e8";
+    g.appendChild(el("rect",{x:s.x,y:s.y,width:s.w*t,height:s.h,fill:col,opacity:.7,tip:s.net+" 水平 stripe（示意 M8）。",class:"hot"}));
+  });
+}
+function buildRails(g,p){
+  const t=ease(p);
+  for(let y=CORE.y+12;y<CORE.y+CORE.h-6;y+=16){
+    let x=CORE.x+10;
+    while(x<CORE.x+CORE.w-10){
+      let w=70;
+      if(x+w>CORE.x+CORE.w-10) w=CORE.x+CORE.w-10-x;
+      if(w>8 && !inHalo(x,y,w,1.2)){
+        g.appendChild(el("rect",{x:x,y:y,width:w*t,height:1.2,fill:"#8aa0b8",opacity:.5,tip:"Follow-pin / rail（示意 M1）：把标准单元电源轨接到 stripe。",class:"hot"}));
+      }
+      x+=78;
+    }
+  }
+}
+function buildDecap(g,p){
+  const r=rng(5);
+  let k=0;
+  for(let y=CORE.y+14;y<CORE.y+CORE.h-12;y+=22){
+    for(let x=CORE.x+20;x<CORE.x+CORE.w-16;x+=48){
+      if(inHalo(x,y,8,6)) continue;
+      const t=ease(ph(p,(k%20)/20*0.8,1));
+      if(r()>0.35){
+        g.appendChild(el("rect",{x:x,y:y,width:8,height:6,rx:1,fill:"#7af0e4",opacity:0.55*t,tip:"Decap（示意）：接在 VDD-VSS 之间的电容单元，抑制动态 IR drop。",class:"hot"}));
+      }
+      k++;
+    }
+  }
+}
+function buildCells(g,p){
+  const n=CELLS.length;
+  CELLS.forEach((c,i)=>{
+    const t=ease(ph(p, (i/n)*0.85, (i/n)*0.85+0.15));
+    if(t<=0) return;
+    g.appendChild(el("rect",{x:c.x,y:c.y,width:c.w*Math.max(t,0.2),height:c.h,fill:c.color,opacity:0.3+0.7*t,tip:c.typ==="dff"?"DFF 标准单元（示例，红色示意）":"标准单元（示例）。必须落在 site row 上，且不得进入 macro halo。",class:"hot"}));
+  });
+}
+function buildTree(g,p,pulse){
+  const maxLv=4;
+  TREE.segs.forEach(([a,b],i)=>{
+    const na=node(a),nb=node(b);
+    const lv=Math.max(na.lv,nb.lv);
+    const t=ease(ph(p, lv/maxLv*0.7, lv/maxLv*0.7+0.22));
+    const L=Math.hypot(nb.x-na.x,nb.y-na.y);
+    const path=`M${na.x} ${na.y} L${nb.x} ${nb.y}`;
+    g.appendChild(el("path",{d:path,fill:"none",stroke:"#7CFF6B","stroke-width":lv<=1?2.6:1.8,opacity:.9,
+      "stroke-dasharray":L,"stroke-dashoffset":L*(1-t),"stroke-linecap":"round",
+      tip:"时钟树分支（示意）：从 clock root 分层向外生长，buffer 插在分叉处，目标是平衡 skew、控制 latency。",class:"hot",filter:t>0.9?"url(#glow)":null}));
+  });
+  TREE.nodes.forEach(n=>{
+    const t=ease(ph(p, n.lv/maxLv*0.7, n.lv/maxLv*0.7+0.2));
+    if(t<=0) return;
+    const r=n.lv===0?6:4;
+    g.appendChild(el("rect",{x:n.x-r,y:n.y-r,width:r*2,height:r*2,rx:1.2,fill:"#d6ff9a",stroke:"#7CFF6B",opacity:t,tip:n.lv===0?"Clock root（示意）：位于 CPU_CLK_MGR 输出。PLL 提供源时钟，CMU 分配。":"Clock buffer / inverter（示意）：逐级插入以驱动负载、收紧 transition。",class:"hot"}));
+  });
+  // sinks
+  SINKS.forEach((s,i)=>{
+    const t=ease(ph(p, 0.55+i*0.02, 0.75+i*0.02));
+    if(t<=0) return;
+    // connect to nearest lv4 or lv3 node
+    let best=TREE.nodes[0], bd=1e9;
+    TREE.nodes.forEach(n=>{const d=Math.hypot(n.x-s.x,n.y-s.y);if(n.lv>=3&&d<bd){bd=d;best=n;}});
+    g.appendChild(el("path",{d:`M${best.x} ${best.y} L${s.x} ${s.y}`,fill:"none",stroke:"#a8ff7a","stroke-width":1,opacity:0.7*t}));
+    const tri=`M${s.x} ${s.y-5} L${s.x+5} ${s.y+4} L${s.x-5} ${s.y+4} Z`;
+    g.appendChild(el("path",{d:tri,fill:"#f0a24b",stroke:"#ffd090","stroke-width":.6,opacity:t,tip:"Clock sink：DFF 的时钟脚（示意）。Skew 看各 sink 到达时间之差，latency 看从 root 到此的插入延迟。",class:"hot"}));
+  });
+  // root label
+  const t0=ease(ph(p,0,0.15));
+  g.appendChild(el("circle",{cx:ROOT.x,cy:ROOT.y,r:8,fill:"none",stroke:"#7CFF6B","stroke-width":1.5,opacity:t0}));
+  g.appendChild(txt(ROOT.x+10,ROOT.y-10,"CLK SRC",{fill:"#d6ff9a","font-size":10,opacity:t0,"font-weight":"700"}));
+  if(pulse){
+    const pr=8+4*Math.sin(pulse*Math.PI*2);
+    g.appendChild(el("circle",{id:"pulse-ring",cx:ROOT.x,cy:ROOT.y,r:pr,fill:"none",stroke:"#7CFF6B",opacity:0.35}));
+  }
+}
+function buildHold(g,p){
+  HOLD_PATHS.forEach((hp,i)=>{
+    const show=ease(ph(p,0.05+i*0.08,0.2+i*0.08));
+    const fixed=ease(ph(p,0.45+i*0.1,0.65+i*0.1));
+    const col=fixed>0.6?"#4dce8a":"#e86b6b";
+    g.appendChild(el("path",{d:dstr(hp.pts),fill:"none",stroke:col,"stroke-width":2,"stroke-dasharray":fixed>0.6?"none":"5 3",opacity:0.85*show,tip:fixed>0.6?"Hold 已修复（示意）：短路径上插入 delay cell，使数据不再早于捕获沿。":"Hold 违例路径（示意）：数据路径过短或 capture 时钟更早到达。Hold 与频率无关。",class:"hot"}));
+    if(fixed>0){
+      const [x,y]=hp.fix;
+      g.appendChild(el("rect",{x:x,y:y,width:14,height:8,rx:1,fill:"#e8c35a",stroke:"#ffe08a",opacity:fixed,tip:"Delay cell（示意）：CTS 后在短数据路径上插入，用来修 hold，不要靠降频。",class:"hot"}));
+      g.appendChild(txt(x-2,y-6,"dly",{fill:"#e8c35a","font-size":9,opacity:fixed}));
+    }
+  });
+}
+function buildGlobalRoute(g,p){
+  const corridors=[
+    [[140,200],[760,200]],
+    [[140,300],[760,300]],
+    [[140,390],[760,390]],
+    [[200,140],[200,500]],
+    [[448,140],[448,500]],
+    [[680,140],[680,500]]
+  ];
+  corridors.forEach((pts,i)=>{
+    const t=ease(ph(p,i*0.1,0.4+i*0.08));
+    g.appendChild(el("path",{d:dstr(pts),fill:"none",stroke:"#5aa6ff","stroke-width":10,opacity:0.14*t,"stroke-linecap":"round",tip:"Global route 走廊（示意）：只分配资源和大致路径，检查拥塞，尚未落到具体轨道。",class:"hot"}));
+  });
+}
+function buildDetailRoute(g,p,antennaPhase){
+  NETS.forEach((net,i)=>{
+    const t=ease(ph(p,0.05+i*0.06,0.25+i*0.06));
+    const col=net.layer==="M2"?"#3ee0d0":"#f0a24b";
+    const L=polyLen(net.pts);
+    const isAnt=net.antenna && antennaPhase>=0;
+    let pts=net.pts;
+    let path=dstr(pts);
+    // jumper fix for antenna net when antennaPhase>0.6
+    if(net.antenna && antennaPhase>0.55){
+      // break long M2 and hop via M3
+      pts=[[150,180],[360,180],[360,200],[520,200],[520,250],[700,250]];
+      path=dstr(pts);
+    }
+    g.appendChild(el("path",{d:path,fill:"none",stroke:isAnt&&antennaPhase<0.55?"#e86b6b":col,"stroke-width":isAnt&&antennaPhase<0.55?2.6:1.6,
+      opacity:0.9*t,"stroke-dasharray":L,"stroke-dashoffset":L*(1-t),"stroke-linecap":"round","stroke-linejoin":"round",
+      tip:net.antenna?(antennaPhase>0.55?"天线修复（示意 jumper）：切断过长的单层金属，经 via 跳到 M3 再回来，降低天线比。":"天线违例（示意）：过长的 M2 在制造刻蚀时像天线集电，可能击穿栅氧。"):(net.layer+" 详细布线（示意）。金属层按优选方向：示例中 M2 横向、M3 纵向。"),
+      class:"hot"}));
+    if(net.antenna && antennaPhase>0.2 && antennaPhase<0.55){
+      g.appendChild(txt(360,166,"ANTENNA",{fill:"#e86b6b","font-size":11,"font-weight":"700",opacity:t}));
+    }
+    if(net.antenna && antennaPhase>0.55){
+      g.appendChild(el("circle",{cx:360,cy:180,r:3.2,fill:"#f0a24b",tip:"Via：跳层 jumper 的过孔（示意）。",class:"hot"}));
+      g.appendChild(el("circle",{cx:360,cy:200,r:3.2,fill:"#f0a24b"}));
+      g.appendChild(txt(368,190,"jumper → M3",{fill:"#f0a24b","font-size":10}));
+      // diode alternative callout
+      g.appendChild(el("circle",{cx:700,cy:250,r:6,fill:"none",stroke:"#e8c35a"}));
+      g.appendChild(txt(708,250,"或天线二极管",{fill:"#e8c35a","font-size":9}));
+    }
+  });
+}
+function buildRC(g,p){
+  const samples=[
+    {x:320,y:220,r:18,c:4.2},{x:520,y:180,r:24,c:6.1},{x:200,y:300,r:15,c:3.3},
+    {x:600,y:300,r:20,c:5.0},{x:450,y:250,r:12,c:2.1},{x:700,y:330,r:16,c:3.8}
+  ];
+  samples.forEach((s,i)=>{
+    const t=ease(ph(p,0.1+i*0.1,0.3+i*0.1));
+    if(t<=0) return;
+    // R box on wire
+    g.appendChild(el("rect",{x:s.x-10,y:s.y-7,width:20,height:14,rx:2,fill:"#102028",stroke:"#3ee0d0",opacity:t,tip:`寄生电阻 R≈${s.r}Ω（示意数值，非真实提取）。线阻造成 RC 延迟并恶化远端 transition。`,class:"hot"}));
+    g.appendChild(txt(s.x,s.y,`R`,{fill:"#3ee0d0","font-size":9,"text-anchor":"middle","font-weight":"700",opacity:t}));
+    // C to ground
+    const cx=s.x+18,cy=s.y+8;
+    g.appendChild(el("path",{d:`M${s.x+10} ${s.y} L${cx} ${s.y} L${cx} ${cy}`,fill:"none",stroke:"#e8c35a",opacity:t}));
+    g.appendChild(el("path",{d:`M${cx-6} ${cy} h12 M${cx-4} ${cy+3} h8 M${cx-2} ${cy+6} h4`,fill:"none",stroke:"#e8c35a","stroke-width":1.3,opacity:t,tip:`对地电容 C≈${s.c}fF（示意）。另有耦合电容影响 crosstalk / SI。`,class:"hot"}));
+  });
+  // coupling
+  const ct=ease(ph(p,0.6,0.85));
+  g.appendChild(el("path",{d:"M310 210 L310 230",fill:"none",stroke:"#c44ed4","stroke-dasharray":"3 2",opacity:ct}));
+  g.appendChild(txt(314,208,"Cc 耦合（示意）",{fill:"#c44ed4","font-size":9,opacity:ct}));
+}
+function buildSTA(g,p){
+  const tS=ease(ph(p,0.05,0.35));
+  const tH=ease(ph(p,0.25,0.5));
+  const tD=ease(ph(p,0.45,0.7));
+  g.appendChild(el("path",{d:dstr(SETUP_PATH.pts),fill:"none",stroke:"#e86aa0","stroke-width":2.4,opacity:0.9*tS,filter:"url(#glow)",tip:"Setup 关键路径（示意，max / late）：launch → 组合逻辑 → capture。修 setup 要让数据更早到达或让捕获沿更晚，降频可以救 setup。",class:"hot","marker-end":"url(#arrR)"}));
+  g.appendChild(txt(210,188,"SETUP 路径",{fill:"#e86aa0","font-size":11,"font-weight":"700",opacity:tS}));
+  HOLD_PATHS.forEach((hp,i)=>{
+    g.appendChild(el("path",{d:dstr(hp.pts),fill:"none",stroke:"#f0a24b","stroke-width":2,opacity:0.85*tH,tip:"Hold 路径（示意，min / early）。与时钟周期无关，降频无效。",class:"hot"}));
+  });
+  g.appendChild(txt(500,214,"HOLD 路径",{fill:"#f0a24b","font-size":11,"font-weight":"700",opacity:tH}));
+  // DRV burst on high fanout
+  g.appendChild(el("circle",{cx:448,cy:278,r:16,fill:"none",stroke:"#e8c35a","stroke-width":2,opacity:tD,tip:"DRV 违例示意：max_tran / max_cap / max_fanout 超库限，延迟模型不可信，需插 buffer 或拆扇出。",class:"hot"}));
+  g.appendChild(txt(466,274,"DRV max_tran",{fill:"#e8c35a","font-size":10,opacity:tD}));
+  // MMMC panel
+  const tv=ease(ph(p,0.15,0.4));
+  const panel=el("g",{opacity:tv,tip:"MMMC analysis view（示意）：constraint mode × delay corner。不能只跑一个慢角。",class:"hot"});
+  panel.appendChild(el("rect",{x:118,y:92,width:210,height:86,rx:6,fill:"#101820",stroke:"#3ee0d0","stroke-width":1}));
+  panel.appendChild(txt(128,108,"MMMC 时序报告（示例数字）",{fill:"#7af0e4","font-size":10,"font-weight":"700"}));
+  panel.appendChild(txt(128,126,"func / ss_125c / Cmax   setup WNS -0.12",{fill:"#e86aa0","font-size":9}));
+  panel.appendChild(txt(128,140,"func / ff_m40c / Cmin   hold  WNS -0.04",{fill:"#f0a24b","font-size":9}));
+  panel.appendChild(txt(128,154,"scan / ss_125c          DRV  3 viol",{fill:"#e8c35a","font-size":9}));
+  panel.appendChild(txt(128,168,"数字为示例，非真实签核数据",{fill:"#6b8296","font-size":8}));
+  g.appendChild(panel);
+}
+function buildPV(g,p){
+  const marks=[
+    {x:260,y:210,typ:"DRC",shape:"sq",tip:"DRC（示意）：金属间距不足。DRC 问的是「能不能按工艺造出来」。"},
+    {x:420,y:260,typ:"DRC",shape:"sq",tip:"DRC（示意）：via enclosure 不够。"},
+    {x:600,y:200,typ:"DRC",shape:"sq",tip:"DRC（示意）：局部密度窗口过疏，需要 dummy metal。"},
+    {x:360,y:330,typ:"LVS",shape:"dia",tip:"LVS short（示意）：两条不同的逻辑网在版图上意外接通。LVS 问的是「是不是这张电路」。"},
+    {x:700,y:300,typ:"LVS",shape:"dia",tip:"LVS open（示意）：本该连通的网在某层断开或漏 via。"},
+    {x:200,y:400,typ:"ERC",shape:"cir",tip:"ERC（示意）：well tap 间距不足，阱电位或闩锁风险。"}
+  ];
+  marks.forEach((m,i)=>{
+    const t=ease(ph(p,0.08+i*0.1,0.25+i*0.1));
+    const gg=el("g",{opacity:t,class:"hot",tip:m.tip});
+    if(m.shape==="sq"){
+      gg.appendChild(el("rect",{x:m.x-6,y:m.y-6,width:12,height:12,fill:"none",stroke:"#e86b6b","stroke-width":2}));
+      gg.appendChild(txt(m.x+8,m.y,"DRC",{fill:"#e86b6b","font-size":9,"font-weight":"700"}));
+    }else if(m.shape==="dia"){
+      gg.appendChild(el("path",{d:`M${m.x} ${m.y-8} L${m.x+8} ${m.y} L${m.x} ${m.y+8} L${m.x-8} ${m.y} Z`,fill:"none",stroke:"#f0a24b","stroke-width":2}));
+      gg.appendChild(txt(m.x+10,m.y,"LVS",{fill:"#f0a24b","font-size":9,"font-weight":"700"}));
+    }else{
+      gg.appendChild(el("circle",{cx:m.x,cy:m.y,r:7,fill:"none",stroke:"#e8c35a","stroke-width":2}));
+      gg.appendChild(txt(m.x+10,m.y,"ERC",{fill:"#e8c35a","font-size":9,"font-weight":"700"}));
+    }
+    g.appendChild(gg);
+  });
+  const tv=ease(ph(p,0.2,0.5));
+  const box=el("g",{opacity:tv});
+  box.appendChild(el("rect",{x:630,y:92,width:150,height:64,rx:6,fill:"#101820",stroke:"#e8c35a"}));
+  box.appendChild(txt(640,108,"本步违例（示例）",{fill:"#e8c35a","font-size":10,"font-weight":"700"}));
+  box.appendChild(txt(640,124,"DRC 3    待清零",{fill:"#e86b6b","font-size":10}));
+  box.appendChild(txt(640,138,"LVS 2    待清零",{fill:"#f0a24b","font-size":10}));
+  box.appendChild(txt(640,152,"ERC 1    待清零",{fill:"#e8c35a","font-size":10}));
+  g.appendChild(box);
+}
+function buildTapeout(g,p){
+  const t=ease(ph(p,0.05,0.4));
+  // dummy metal density wash
+  const r=rng(3);
+  for(let y=CORE.y+8;y<CORE.y+CORE.h;y+=10){
+    for(let x=CORE.x+8;x<CORE.x+CORE.w;x+=10){
+      if(inHalo(x,y,6,6)) continue;
+      if(r()>0.72) g.appendChild(el("rect",{x:x,y:y,width:5,height:3,fill:"#2a9b8e",opacity:0.2*t}));
+    }
+  }
+  // seal ring
+  g.appendChild(el("rect",{x:DIE.x+8,y:DIE.y+8,width:DIE.w-16,height:DIE.h-16,rx:2,fill:"none",stroke:"#e8c35a","stroke-width":3,opacity:0.55*t,tip:"Seal ring（示意）：芯片密封环，属于流片收尾结构。",class:"hot"}));
+  const tb=ease(ph(p,0.45,0.75));
+  const pack=el("g",{opacity:tb,class:"hot",tip:"GDSII / OASIS 交付包（示意）：按 foundry layer map 导出的最终版图，不是过程中的 DEF。"});
+  pack.appendChild(el("rect",{x:640,y:96,width:178,height:78,rx:6,fill:"#10241c",stroke:"#3ee0d0","stroke-width":1.4}));
+  pack.appendChild(txt(652,116,"GDSII / OASIS",{fill:"#7af0e4","font-size":13,"font-weight":"700"}));
+  pack.appendChild(txt(652,134,"streamOut → foundry",{fill:"#c9d6e0","font-size":11}));
+  pack.appendChild(txt(652,152,"TAPEOUT",{fill:"#e8c35a","font-size":16,"font-weight":"700","letter-spacing":"2"}));
+  g.appendChild(pack);
+}
+function buildECO(g,p){
+  const t1=ease(ph(p,0.05,0.4));
+  SPARES.forEach((s,i)=>{
+    const t=ease(ph(p,0.04+i*0.03,0.2+i*0.03));
+    g.appendChild(el("rect",{x:s.x-1,y:s.y-1,width:s.w+2,height:s.h+2,rx:1,fill:"#e8c35a",opacity:0.85*t,tip:"Spare cell（示意）：布局阶段预埋的未用门（INV/NAND/DFF）。Post-mask 只能改金属，必须靠这些单元做补丁。",class:"hot"}));
+  });
+  g.appendChild(txt(300,90,"metal-only ECO：金色为启用的 spare，基层不动",{fill:"#e8c35a","font-size":11,opacity:t1,"font-weight":"700"}));
+  const t2=ease(ph(p,0.45,0.8));
+  // metal patch from a spare to a nearby net
+  const s=SPARES[4]||SPARES[0];
+  const path=`M${s.x+s.w} ${s.y+4} H${s.x+40} V${s.y-20} H${s.x+90}`;
+  g.appendChild(el("path",{d:path,fill:"none",stroke:"#ffd56a","stroke-width":2.2,opacity:t2,"stroke-linecap":"round",tip:"Post-mask 金属改动（示意）：只改金属/via，把 spare 的输入输出接到目标网。不能在空站点长出新的晶体管。",class:"hot"}));
+  g.appendChild(txt(s.x+44,s.y-28,"ECO 金属改线",{fill:"#ffd56a","font-size":10,opacity:t2}));
+  // pre vs post callout
+  const t3=ease(ph(p,0.6,0.9));
+  const box=el("g",{opacity:t3});
+  box.appendChild(el("rect",{x:118,y:92,width:230,height:58,rx:6,fill:"#101820",stroke:"#e8c35a"}));
+  box.appendChild(txt(128,110,"Pre-mask：可增删单元，可动基层",{fill:"#7af0e4","font-size":10}));
+  box.appendChild(txt(128,126,"Post-mask：只改金属 + 启用 spare",{fill:"#e8c35a","font-size":10}));
+  box.appendChild(txt(128,142,"功能改动还需 LEC 与物理回归",{fill:"#c9d6e0","font-size":10}));
+  g.appendChild(box);
+}
+
+function legendFor(step){
+  const L={
+    5:`<div><i style="background:#c9a227"></i>IO pad</div>
+       <div><i style="background:#6c5ce7"></i>SRAM / ROM</div>
+       <div><i style="background:#4a8eff"></i>DSP / 数字宏</div>
+       <div><i style="background:#e8a838"></i>时钟 / PLL</div>
+       <div><i style="background:#e85a8a"></i>模拟 ADC</div>
+       <div><i style="background:#2ec9a0"></i>IO PHY</div>`,
+    6:`<div><i style="background:#e86050"></i>VDD ring/stripe</div>
+       <div><i style="background:#4a86e8"></i>VSS ring/stripe</div>
+       <div><i style="background:#8aa0b8"></i>Follow-pin rail</div>
+       <div><i style="background:#7af0e4"></i>Decap</div>`,
+    7:`<div><i style="background:#3a5160"></i>标准单元</div>
+       <div><i style="background:#c45c6a"></i>DFF（示意）</div>
+       <div><i style="border:1px dashed #f0a24b;background:transparent"></i>Macro halo（空置）</div>`,
+    8:`<div><i style="background:#7CFF6B"></i>时钟树 / buffer</div>
+       <div><i style="background:#f0a24b"></i>DFF sink</div>
+       <div><i style="background:#d6ff9a"></i>Clock root</div>`,
+    9:`<div><i style="background:#e86b6b"></i>Hold 违例路径</div>
+       <div><i style="background:#e8c35a"></i>Delay cell</div>
+       <div><i style="background:#4dce8a"></i>修复后</div>`,
+    10:`<div><i style="background:#5aa6ff;opacity:.5"></i>Global 走廊</div>
+        <div><i style="background:#3ee0d0"></i>M2 详细（横）</div>
+        <div><i style="background:#f0a24b"></i>M3 详细（竖）</div>
+        <div><i style="background:#e86b6b"></i>天线超限</div>`,
+    11:`<div><i style="background:#3ee0d0"></i>寄生 R</div>
+        <div><i style="background:#e8c35a"></i>对地 C</div>
+        <div><i style="background:#c44ed4"></i>耦合 Cc</div>`,
+    12:`<div><i style="background:#e86aa0"></i>Setup 路径</div>
+        <div><i style="background:#f0a24b"></i>Hold 路径</div>
+        <div><i style="background:#e8c35a"></i>DRV</div>`,
+    13:`<div><i style="border:2px solid #e86b6b;background:transparent"></i>DRC</div>
+        <div><i style="border:2px solid #f0a24b;background:transparent"></i>LVS</div>
+        <div><i style="border:2px solid #e8c35a;background:transparent"></i>ERC</div>`,
+    14:`<div><i style="background:#2a9b8e"></i>Dummy metal</div>
+        <div><i style="background:#e8c35a"></i>Seal ring / GDS</div>`,
+    15:`<div><i style="background:#e8c35a"></i>Spare cell</div>
+        <div><i style="background:#ffd56a"></i>Metal-only ECO</div>`
+  };
+  return L[step]||"";
+}
+
+function paintFloor(svg, step, p, tsec){
+  roundedChip(svg);
+  // die outline
+  svg.appendChild(el("rect",{x:DIE.x,y:DIE.y,width:DIE.w,height:DIE.h,rx:4,fill:"#0e1620",stroke:"#c9a227","stroke-width":1.6,tip:"Die 外框（示例设计 mini_cpu）。",class:"hot"}));
+  const coreT = step===5?ease(ph(p,0,0.18)):1;
+  svg.appendChild(el("rect",{x:CORE.x,y:CORE.y,width:CORE.w,height:CORE.h,fill:"none",stroke:"#e8c35a","stroke-width":1.2,"stroke-dasharray":"7 5",opacity:0.7*coreT,tip:"Core 边界：标准单元 site row 所在区域，比 die 内缩以放下 IO pad 环。",class:"hot"}));
+
+  const done=s=> step>s?1: step===s?p:0;
+
+  const gPad=el("g",{}); buildPads(gPad, done(5)<1 && step===5? ph(p,0.05,0.4): (step>=5?1:0)); svg.appendChild(gPad);
+  if(step>=5){
+    const gH=el("g",{}); buildHalo(gH, step===5?ph(p,0.7,1):1); svg.appendChild(gH);
+    const gM=el("g",{}); buildMacros(gM, step===5?p:1, step===5); svg.appendChild(gM);
+  }
+  if(step>=6){
+    const pr= step===6?p:1;
+    const gR=el("g",{}); buildRings(gR, step===6?ph(pr,0,0.28):1); svg.appendChild(gR);
+    const gS=el("g",{}); buildStripes(gS, step===6?ph(pr,0.22,0.65):1); svg.appendChild(gS);
+    const gRail=el("g",{}); if(step>6 || pr>0.55) buildRails(gRail, step===6?ph(pr,0.55,0.8):1); svg.appendChild(gRail);
+    const gD=el("g",{}); if(step>6 || pr>0.72) buildDecap(gD, step===6?ph(pr,0.72,1):1); svg.appendChild(gD);
+  }
+  if(step>=7){
+    const gC=el("g",{}); buildCells(gC, step===7?p:1); svg.appendChild(gC);
+  }
+  if(step>=8){
+    const gT=el("g",{}); buildTree(gT, step===8?p:1, step>=8? (tsec%2)/2 : 0); svg.appendChild(gT);
+  }
+  if(step===9){
+    const gHo=el("g",{}); buildHold(gHo,p); svg.appendChild(gHo);
+  } else if(step>9){
+    const gHo=el("g",{}); buildHold(gHo,1); svg.appendChild(gHo);
+  }
+  if(step>=10){
+    const pr=step===10?p:1;
+    const gG=el("g",{}); buildGlobalRoute(gG, step===10?ph(pr,0,0.35):1); svg.appendChild(gG);
+    const ant=step===10?ph(pr,0.55,1):1;
+    const gDet=el("g",{}); buildDetailRoute(gDet, step===10?ph(pr,0.28,0.75):1, ant); svg.appendChild(gDet);
+  }
+  if(step>=11){
+    const gRc=el("g",{}); buildRC(gRc, step===11?p:1); svg.appendChild(gRc);
+  }
+  if(step>=12){
+    const gSta=el("g",{}); buildSTA(gSta, step===12?p: (step>12?1:0)); svg.appendChild(gSta);
+  }
+  if(step===13){
+    const gPv=el("g",{}); buildPV(gPv,p); svg.appendChild(gPv);
+  }
+  if(step>=14){
+    // hide leftover PV marks for a cleaner tapeout; ECO still uses clean layout
+    const gTo=el("g",{}); buildTapeout(gTo, step===14?p:1); svg.appendChild(gTo);
+  }
+  if(step>=15){
+    const gE=el("g",{}); buildECO(gE, step===15?p:1); svg.appendChild(gE);
+  }
+  if(step>=5){
+    const gL=el("g",{});
+    MACROS.forEach(m=>{
+      gL.appendChild(el("rect",{x:m.x+5,y:m.y+5,width:Math.min(m.w-10,m.name.length*6.6+8),height:13,rx:2,fill:"rgba(8,12,18,.55)"}));
+      gL.appendChild(txt(m.x+8,m.y+12,m.name,{"font-size":10,fill:"#f5f7fa","font-weight":"700"}));
+    });
+    svg.appendChild(gL);
+  }
+}
+/* ========== 步骤 1-4 画布 ========== */
+function paintOverview(svg,p,tsec){
+  svg.appendChild(el("rect",{x:0,y:0,width:900,height:620,fill:"transparent"}));
+  txt(40,36,"数字后端主流程 · 每一步之后都有 QA 门禁，不过关就退回",{fill:"#8aa0b3","font-size":13});
+  const nodes=[
+    {id:"syn",x:70,y:80,w:120,h:44,l:"逻辑综合",s:"RTL → 网表"},
+    {id:"imp",x:230,y:80,w:120,h:44,l:"设计导入",s:"lib/LEF/SDC"},
+    {id:"chk",x:390,y:80,w:120,h:44,l:"网表检查",s:"floating / 时钟"},
+    {id:"fp",x:550,y:80,w:120,h:44,l:"Floorplan",s:"pad + macro"},
+    {id:"pg",x:70,y:180,w:120,h:44,l:"电源规划",s:"ring/stripe"},
+    {id:"pl",x:230,y:180,w:120,h:44,l:"Placement",s:"row 上落位"},
+    {id:"cts",x:390,y:180,w:120,h:44,l:"CTS",s:"skew / latency"},
+    {id:"pcts",x:550,y:180,w:120,h:44,l:"Post-CTS",s:"修 hold"},
+    {id:"rt",x:70,y:280,w:120,h:44,l:"布线",s:"全局→详细"},
+    {id:"rc",x:230,y:280,w:120,h:44,l:"寄生提取",s:"SPEF R/C"},
+    {id:"sta",x:390,y:280,w:120,h:44,l:"STA 签核",s:"MMMC"},
+    {id:"pv",x:550,y:280,w:120,h:44,l:"物理验证",s:"DRC/LVS/ERC"},
+    {id:"to",x:310,y:390,w:150,h:50,l:"签核与流片",s:"GDSII 交付"},
+    {id:"eco",x:550,y:390,w:120,h:50,l:"ECO",s:"spare / metal"}
+  ];
+  const n=nodes.length;
+  nodes.forEach((nd,i)=>{
+    const t=ease(ph(p,i/n*0.7,i/n*0.7+0.12));
+    const g=el("g",{opacity:t,class:"hot",tip:nd.l+"：主流程中的工序节点。真实项目会在 QA 门禁处退回，而不是一次走完。",transform:`translate(0,${(1-t)*10})`});
+    g.appendChild(el("rect",{x:nd.x,y:nd.y,width:nd.w,height:nd.h,rx:8,fill:"#14202c",stroke:"#3ee0d0","stroke-width":1.3}));
+    g.appendChild(txt(nd.x+12,nd.y+18,nd.l,{fill:"#e8c35a","font-size":13,"font-weight":"700"}));
+    g.appendChild(txt(nd.x+12,nd.y+34,nd.s,{fill:"#8aa0b3","font-size":11}));
+    svg.appendChild(g);
+  });
+  const tArr=ease(ph(p,0.2,0.45));
+  const fwd=[
+    "M190 102 H230","M350 102 H390","M510 102 H550",
+    "M670 102 H700 V152 H130 V176",
+    "M190 202 H230","M350 202 H390","M510 202 H550",
+    "M130 224 V250 H130 V276",
+    "M190 302 H230","M350 302 H390","M510 302 H550",
+    "M610 324 V360 H385 V386",
+    "M460 415 H546"
+  ];
+  fwd.forEach((d,i)=>{
+    const t=ease(ph(p,0.15+i*0.03,0.35+i*0.03));
+    svg.appendChild(el("path",{d,fill:"none",stroke:"#7af0e4","stroke-width":1.6,opacity:t,"marker-end":"url(#arr)"}));
+  });
+  const tBack=ease(ph(p,0.72,0.9));
+  const pulse=0.55+0.45*Math.sin(tsec*2.2);
+  svg.appendChild(el("path",{d:"M80 202 C 20 202, 16 124, 70 102",fill:"none",stroke:"#e86b6b","stroke-width":1.6,"stroke-dasharray":"6 4",opacity:tBack*pulse,"marker-end":"url(#arrR)"}));
+  svg.appendChild(el("path",{d:"M80 302 C 10 310, 10 210, 80 202",fill:"none",stroke:"#e86b6b","stroke-width":1.6,"stroke-dasharray":"6 4",opacity:tBack*pulse,"marker-end":"url(#arrR)"}));
+  svg.appendChild(el("path",{d:"M670 302 C 810 330, 810 90, 670 102",fill:"none",stroke:"#f0a24b","stroke-width":1.6,"stroke-dasharray":"6 4",opacity:tBack*pulse,"marker-end":"url(#arrY)"}));
+  svg.appendChild(txt(16,160,"QA 退回",{fill:"#e86b6b","font-size":11,opacity:tBack}));
+  svg.appendChild(txt(700,58,"拥塞 / 时序不收 → 退 floorplan 或 placement",{fill:"#f0a24b","font-size":11,opacity:tBack}));
+
+  // PPA triangle
+  const tP=ease(ph(p,0.4,0.7));
+  const cx=780,cy=500;
+  const g=el("g",{opacity:tP,class:"hot",tip:"PPA 三角形：Power、Performance、Area 互相牵扯。修时序、加电源、插缓冲都会动到另外两边。"});
+  g.appendChild(el("path",{d:"M780 430 L850 550 L710 550 Z",fill:"rgba(62,224,208,.08)",stroke:"#3ee0d0","stroke-width":1.5}));
+  g.appendChild(txt(748,420,"Performance",{fill:"#e8c35a","font-size":11}));
+  g.appendChild(txt(850,566,"Area",{fill:"#7af0e4","font-size":11}));
+  g.appendChild(txt(680,566,"Power",{fill:"#f0a24b","font-size":11}));
+  svg.appendChild(g);
+  svg.appendChild(txt(40,500,"看每一步：这一步在物理上发生了什么，过不了门禁该退到哪里。",{fill:"#8aa0b3","font-size":13,opacity:ease(ph(p,0.55,0.8))}));
+}
+
+function paintSynth(svg,p){
+  txt(40,32,"逻辑综合管线：RTL 描述收敛成目标库上的门级标准单元",{fill:"#8aa0b3","font-size":13});
+  // RTL card
+  const t0=ease(ph(p,0,0.18));
+  svg.appendChild(el("rect",{x:30,y:60,width:230,height:300,rx:8,fill:"#0e161e",stroke:"#3ee0d0",opacity:t0,tip:"示例 RTL（示意）。综合只接受可综合子集。",class:"hot"}));
+  svg.appendChild(txt(44,80,"mini_cpu.v  · 示例 RTL",{fill:"#7af0e4","font-size":11,opacity:t0,"font-weight":"700"}));
+  const code=["module mini_cpu (","  input clk, rst_n,","  input  [7:0] inst,","  output [7:0] dout);","  reg [7:0] pc, acc;","  always @(posedge clk","            or negedge rst_n)","    if (!rst_n) pc <= 8'd0;","    else pc <= pc + 8'd1;","  // ... ALU / decode","endmodule"];
+  code.forEach((ln,i)=>svg.appendChild(txt(44,104+i*18,ln,{fill:"#b7e8df","font-size":11,"font-family":MONO,opacity:t0})));
+
+  // arrow generic
+  const t1=ease(ph(p,0.18,0.32));
+  svg.appendChild(el("path",{d:"M270 200 H 320",fill:"none",stroke:"#7af0e4","stroke-width":2,opacity:t1,"marker-end":"url(#arr)"}));
+  svg.appendChild(txt(262,182,"syn_generic",{fill:"#7af0e4","font-size":11,opacity:t1}));
+
+  // generic cells
+  const generics=[[350,90],[410,90],[470,90],[350,150],[410,150],[470,150],[380,210],[440,210],[410,270],[350,270],[470,270]];
+  generics.forEach((c,i)=>{
+    const t=ease(ph(p,0.28+i*0.03,0.4+i*0.03));
+    svg.appendChild(el("rect",{x:c[0],y:c[1],width:44,height:36,rx:3,fill:"#2a3540",stroke:"#8aa0b3",opacity:t,tip:"Generic / GTECH 逻辑（示意）：工艺无关优化阶段的布尔节点，尚未映射到目标库单元。",class:"hot"}));
+  });
+  svg.appendChild(txt(350,330,"未映射逻辑（GTECH）",{fill:"#8aa0b3","font-size":11,opacity:ease(ph(p,0.4,0.5))}));
+
+  const t2=ease(ph(p,0.52,0.64));
+  svg.appendChild(el("path",{d:"M530 200 H 590",fill:"none",stroke:"#e8c35a","stroke-width":2,opacity:t2,"marker-end":"url(#arrY)"}));
+  svg.appendChild(txt(530,182,"syn_map / syn_opt",{fill:"#e8c35a","font-size":11,opacity:t2}));
+
+  const mapped=[
+    {x:610,y:80,w:50,h:36,c:"#3e7a6a",l:"INV"},
+    {x:680,y:80,w:56,h:36,c:"#4a6a8a",l:"NAND2"},
+    {x:750,y:80,w:56,h:36,c:"#4a6a8a",l:"AOI21"},
+    {x:610,y:140,w:50,h:36,c:"#3e7a6a",l:"BUF"},
+    {x:680,y:140,w:70,h:40,c:"#c45c6a",l:"DFF",dff:1},
+    {x:760,y:140,w:70,h:40,c:"#c45c6a",l:"DFF",dff:1},
+    {x:610,y:210,w:56,h:36,c:"#4a6a8a",l:"NOR2"},
+    {x:680,y:210,w:70,h:40,c:"#c45c6a",l:"DFF",dff:1},
+    {x:760,y:210,w:56,h:36,c:"#3e7a6a",l:"INVX8"},
+    {x:640,y:280,w:70,h:40,c:"#c45c6a",l:"DFF",dff:1},
+    {x:730,y:280,w:56,h:36,c:"#4a6a8a",l:"MUX2"}
+  ];
+  mapped.forEach((m,i)=>{
+    const t=ease(ph(p,0.48+i*0.018,0.60+i*0.018));
+    svg.appendChild(el("rect",{x:m.x,y:m.y,width:m.w,height:m.h,rx:3,fill:m.c,stroke:m.dff?"#ffd0d6":"#a8d8c8","stroke-width":m.dff?2:1,opacity:t,tip:m.dff?"映射后的 DFF（示意）：来自 always @(posedge clk) 的寄存器推断。":"映射后的标准单元（示意）：已绑定目标库的驱动强度与功能。",class:"hot"}));
+    svg.appendChild(txt(m.x+8,m.y+m.h/2,m.l,{fill:"#0e1410","font-size":11,"font-weight":"700",opacity:t}));
+  });
+  svg.appendChild(txt(610,350,"红框 = DFF（寄存器）  门级网表（库单元）",{fill:"#8aa0b3","font-size":11,opacity:ease(ph(p,0.62,0.75))}));
+  const t3=ease(ph(p,0.68,0.82));
+  svg.appendChild(el("rect",{x:30,y:400,width:840,height:70,rx:8,fill:"#102028",stroke:"#3ee0d0",opacity:t3}));
+  svg.appendChild(txt(46,430,"write_hdl → top.v　　write_sdc → top.sdc　　示例设计：263 cells / 32 DFF（非真实项目）",{fill:"#7af0e4","font-size":14,opacity:t3}));
+  svg.appendChild(txt(46,454,"综合过时序只是入场券，线延迟此时多为 wire-load 或粗估计，不能代替 post-route 签核。",{fill:"#8aa0b3","font-size":12,opacity:t3}));
+}
+
+function paintImport(svg,p){
+  txt(40,32,"把逻辑、电气、物理三套数据对齐，建立可查询的设计库",{fill:"#8aa0b3","font-size":13});
+  const files=[
+    {n:"top.v",sub:"门级网表",c:"#3ee0d0"},
+    {n:"top.sdc",sub:"时序约束",c:"#e8c35a"},
+    {n:"ss_125c.lib",sub:"时序库",c:"#5aa6ff"},
+    {n:"stdcell.lef",sub:"物理库",c:"#c44ed4"},
+    {n:"mmmc.tcl",sub:"多工艺角",c:"#f0a24b"}
+  ];
+  files.forEach((f,i)=>{
+    const t=ease(ph(p,i*0.1, i*0.1+0.2));
+    const y=70+t*80; // drop
+    const x=80+i*160;
+    const g=el("g",{opacity:t,class:"hot",tip:f.n+"（示意文件）：落入设计库后与其它视图对齐。",transform:`translate(0,${(1-t)*-40})`});
+    g.appendChild(el("rect",{x:x,y:70,width:130,height:54,rx:8,fill:"#14202c",stroke:f.c,"stroke-width":1.5}));
+    g.appendChild(txt(x+12,90,f.n,{fill:f.c,"font-size":13,"font-weight":"700","font-family":MONO}));
+    g.appendChild(txt(x+12,108,f.sub,{fill:"#8aa0b3","font-size":11}));
+    svg.appendChild(g);
+    const t2=ease(ph(p,0.2+i*0.08,0.4+i*0.08));
+    svg.appendChild(el("path",{d:`M${x+65} 124 V 200`,fill:"none",stroke:f.c,"stroke-width":1.4,opacity:t2,"marker-end":"url(#arr)"}));
+  });
+  const tBox=ease(ph(p,0.35,0.6));
+  svg.appendChild(el("rect",{x:70,y:200,width:760,height:280,rx:10,fill:"#0c141c",stroke:"#e8c35a","stroke-width":2,"stroke-dasharray":"10 7",opacity:tBox,tip:"P&R 设计数据库（示意）：网表连接、LEF 几何、SDC 约束、MMMC view 已对齐。",class:"hot"}));
+  const tOk=ease(ph(p,0.62,0.85));
+  svg.appendChild(txt(450,320,"设计数据已建立",{"text-anchor":"middle",fill:"#e8c35a","font-size":28,"font-weight":"700",opacity:tOk}));
+  svg.appendChild(txt(450,360,"逻辑 · 物理 · 电气  三套信息完成对齐",{"text-anchor":"middle",fill:"#7af0e4","font-size":16,opacity:tOk}));
+  svg.appendChild(txt(450,396,"init_design 成功只代表读入，深度检查见下一步（示例设计）",{"text-anchor":"middle",fill:"#8aa0b3","font-size":12,opacity:tOk}));
+}
+
+function paintCheck(svg,p){
+  txt(40,32,"在动 floorplan 之前，先把网表结构与时钟约束检查清楚",{fill:"#8aa0b3","font-size":13});
+  // simple schematic
+  const mods=[
+    {x:80,y:80,w:140,h:80,n:"u_ifu"},
+    {x:280,y:80,w:140,h:80,n:"u_exu"},
+    {x:480,y:80,w:140,h:80,n:"u_lsu"},
+    {x:180,y:240,w:160,h:90,n:"u_rf  (DFF×)"},
+    {x:420,y:240,w:160,h:90,n:"u_clk_gate"}
+  ];
+  mods.forEach((m,i)=>{
+    const t=ease(ph(p,i*0.05,0.2));
+    svg.appendChild(el("rect",{x:m.x,y:m.y,width:m.w,height:m.h,rx:6,fill:"#14202c",stroke:"#3ee0d0",opacity:t}));
+    svg.appendChild(txt(m.x+12,m.y+30,m.n,{fill:"#7af0e4","font-size":13,opacity:t,"font-family":MONO}));
+  });
+  svg.appendChild(el("path",{d:"M220 120 H280",stroke:"#7af0e4",fill:"none","stroke-width":1.5,opacity:ease(ph(p,0.15,0.3))}));
+  svg.appendChild(el("path",{d:"M420 120 H480",stroke:"#7af0e4",fill:"none","stroke-width":1.5,opacity:ease(ph(p,0.18,0.32))}));
+  svg.appendChild(el("path",{d:"M150 160 V 240",stroke:"#7af0e4",fill:"none","stroke-width":1.5,opacity:ease(ph(p,0.2,0.35))}));
+  svg.appendChild(el("path",{d:"M350 160 V 240",stroke:"#7af0e4",fill:"none","stroke-width":1.5,opacity:ease(ph(p,0.22,0.36))}));
+
+  // issues appear
+  const issues=[
+    {x:250,y:60,typ:"floating",ok:false,label:"floating net",tip:"Floating net（示意）：这条网没有驱动或未完整连接，需确认是漏连还是应 tie 掉。"},
+    {x:520,y:70,typ:"undriven",ok:true,label:"undriven input",tip:"Undriven input（示意）：输入没有源。本例已解释为未用 IP 端口并做记录。"},
+    {x:360,y:186,typ:"multi",ok:false,label:"multi-driven",tip:"Multi-driven net（示意）：两个驱动同时打一条网，除开漏等特例外必须查清。"},
+    {x:210,y:300,typ:"noclk",ok:false,label:"no-clock flop",tip:"No-clock flop（示意）：寄存器没有有效时钟，STA 不会正确分析，不能带入 floorplan。"}
+  ];
+  issues.forEach((is,i)=>{
+    const t=ease(ph(p,0.3+i*0.1,0.45+i*0.1));
+    const resolved=is.ok?ease(ph(p,0.5,0.65)):0;
+    const col=resolved>0.5?"#4dce8a":"#e86b6b";
+    const g=el("g",{opacity:t,class:"hot",tip:is.tip});
+    g.appendChild(el("circle",{cx:is.x,cy:is.y,r:9,fill:"none",stroke:col,"stroke-width":2}));
+    g.appendChild(el("path",{d:`M${is.x-4} ${is.y} L${is.x+4} ${is.y} M${is.x} ${is.y-4} L${is.x} ${is.y+4}`,stroke:col,"stroke-width":2}));
+    g.appendChild(txt(is.x+12,is.y,is.label+(resolved>0.5?"  · 已解释":"  · 待处理"),{fill:col,"font-size":11,"font-weight":"700"}));
+    svg.appendChild(g);
+  });
+
+  const tR=ease(ph(p,0.5,0.7));
+  svg.appendChild(el("rect",{x:620,y:80,width:250,height:300,rx:8,fill:"#101820",stroke:"#3ee0d0",opacity:tR}));
+  svg.appendChild(txt(636,106,"checkDesign 摘要（示意）",{fill:"#7af0e4","font-size":12,"font-weight":"700",opacity:tR}));
+  const lines=["floating net          1  阻断","undriven input        1  已解释","multi-driven          1  阻断","combinational loop    0  通过","no-clock flop         1  阻断","unconstrained port    0  通过"];
+  lines.forEach((ln,i)=>svg.appendChild(txt(636,136+i*24,ln,{fill:ln.indexOf("阻断")>=0?"#e86b6b":ln.indexOf("解释")>=0?"#e8c35a":"#4dce8a","font-size":12,"font-family":MONO,opacity:tR})));
+  svg.appendChild(txt(636,350,"有阻断项时不进入 floorplan",{fill:"#e8c35a","font-size":11,opacity:tR}));
+}
+
+function renderStep(step,p,tsec){
+  const svg=clearStage();
+  defsFor(svg);
+  try{
+    if(step===1) paintOverview(svg,p,tsec);
+    else if(step===2) paintSynth(svg,p);
+    else if(step===3) paintImport(svg,p);
+    else if(step===4) paintCheck(svg,p);
+    else paintFloor(svg,step,p,tsec);
+  }catch(err){
+    console.error(err);
+    svg.appendChild(txt(40,40,String(err&&err.message||err),{fill:"#e86b6b","font-size":14}));
+  }
+}
+/* ========== 交互与主循环 ========== */
+const DURATION=8200, HOLD=1400;
+const state={
+  step:1, p:0, playing:true, speed:1,
+  last:0, raf:0, elapsed:0, cover:true
+};
+const shotMode=/(?:[?&]shot=)/.test(location.search)||/headless/i.test(navigator.userAgent);
+
+function $(id){return document.getElementById(id);}
+
+function renderLeft(){
+  const s=STEPS[state.step-1];
+  const pits=s.pits.map(pt=>`<div class="pit"><b>${pt.t}</b>${pt.d}</div>`).join("");
+  $("left").innerHTML=`
+    <div class="step-kicker">
+      <div class="badge-num">${String(s.id).padStart(2,"0")}</div>
+      <h2>${s.title}<small>${s.en}</small></h2>
+    </div>
+    <p class="lead">${s.lead}</p>
+    <div class="io">
+      <div class="box"><h3>输入</h3><ul>${s.inputs.map(i=>`<li>${i}</li>`).join("")}</ul></div>
+      <div class="box"><h3>输出</h3><ul>${s.outputs.map(i=>`<li>${i}</li>`).join("")}</ul></div>
+    </div>
+    <div class="sec"><h3>关键动作</h3><ol>${s.actions.map(a=>`<li>${a}</li>`).join("")}</ol></div>
+    <div class="sec"><h3>为什么要做这一步</h3><div class="why">${s.why}</div></div>
+    <div class="sec pits"><h3>常见坑</h3>${pits}</div>
+    <div class="sec"><h3>工具命令 <span style="color:var(--gold);font-weight:500">（示意）</span></h3>
+      <div class="cmd"><div class="tools">${s.toolTags.map(t=>`<span class="t">${t}</span>`).join("")}</div><pre>${s.tools.replace(/</g,"&lt;")}</pre></div>
+    </div>
+    <div class="hint">快捷键：<kbd>←</kbd> <kbd>→</kbd> 翻步　<kbd>Home</kbd> <kbd>End</kbd>　<kbd>Space</kbd> 暂停　<kbd>R</kbd> 重放　<kbd>F</kbd> 全屏　<kbd>Esc</kbd> 退出全屏</div>
+  `;
+  $("left").scrollTop=0;
+  $("qa").innerHTML=s.qa.map((q,i)=>`
+    <article class="qcard" data-i="${i}" tabindex="0">
+      <h4>${q.q}</h4>
+      <p class="sum">${q.s}</p>
+      <div class="full">${q.a}</div>
+    </article>`).join("");
+  $("qa").querySelectorAll(".qcard").forEach(card=>{
+    const tog=()=>card.classList.toggle("open");
+    card.addEventListener("click",tog);
+    card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();tog();}});
+  });
+}
+
+function renderNav(){
+  const rows=[STEPS.slice(0,8),STEPS.slice(8)];
+  $("stepnav").innerHTML=rows.map(row=>`<div class="stepnav-row">${row.map(s=>{
+    const cls=s.id===state.step?"active":(s.id<state.step?"done":"");
+    const mark=s.id<state.step?"✓":s.id;
+    return `<button type="button" class="step-btn ${cls}" data-step="${s.id}"><span class="n">${mark}</span>${s.nav}</button>`;
+  }).join("")}</div>`).join("");
+  $("stepnav").querySelectorAll(".step-btn").forEach(b=>{
+    b.addEventListener("click",()=>goto(+b.dataset.step,true));
+  });
+}
+
+function setHash(){
+  if(state.cover && !shotMode){
+    if(location.hash!=="#cover") history.replaceState(null,"","#cover");
+  }else{
+    const want="#step="+state.step;
+    if(location.hash!==want) history.replaceState(null,"",want);
+  }
+}
+
+function goto(n,restart){
+  n=clamp(n|0,1,15);
+  const chg=n!==state.step;
+  state.step=n;
+  if(restart||chg){state.elapsed=shotMode?0.72*DURATION:0;state.p=shotMode?0.72:0;state.playing=!shotMode;state.last=0;state.bucket=-1;state.forceRender=1;}
+  $("btnPrev").disabled=n<=1;
+  $("btnNext").disabled=n>=15;
+  $("stepPos").textContent=n+" / 15";
+  $("stageTitle").textContent=STEPS[n-1].stage;
+  const lg=legendFor(n);
+  $("legend").innerHTML=lg; $("legend").style.display=lg?"block":"none";
+  renderNav(); renderLeft(); setHash(); updatePlayBtn();
+  renderStep(n,state.p,state.elapsed/1000);
+}
+
+function replay(){
+  state.elapsed=0;state.p=0;state.playing=true;state.last=0;state.bucket=-1;state.forceRender=1;updatePlayBtn();
+  renderStep(state.step,0,0);
+}
+function updatePlayBtn(){ $("btnPlay").textContent=(state.playing||shotMode)?"暂停":"播放"; }
+function togglePlay(){ state.playing=!state.playing; state.last=0; updatePlayBtn(); }
+
+function loop(ts){
+  state.raf=requestAnimationFrame(loop);
+
+
+  if(!state.last) state.last=ts;
+  const dt=Math.min(64,ts-state.last); state.last=ts;
+  const total=DURATION+HOLD;
+  if(state.playing && !state.cover){
+    state.elapsed+=dt*state.speed;
+    if(state.elapsed>=total) state.elapsed=state.elapsed%total;
+  }
+  const raw=state.elapsed;
+  state.p = raw<=DURATION ? raw/DURATION : 1;
+  $("progbar").style.width=(state.p*100).toFixed(2)+"%";
+  if(state.cover) return;
+  const animating=state.playing && state.p<1;
+  const bucket=animating?Math.floor(state.p*160):-1;
+  if(state.forceRender || (animating && bucket!==state.bucket)){
+    state.forceRender=0; state.bucket=bucket;
+    renderStep(state.step,state.p,state.elapsed/1000);
+  }else if(!animating){
+    const ring=document.getElementById("pulse-ring");
+    if(ring){
+      const pr=8+4*Math.sin((state.elapsed/1000)*Math.PI*2);
+      ring.setAttribute("r",pr);
+    }
+  }
+}
+
+function showCover(v){
+  state.cover=v;
+  $("cover").classList.toggle("show",v);
+  if(v){ setHash(); }
+  else { state.elapsed=shotMode?0.72*DURATION:0;state.p=shotMode?0.72:0;state.playing=!shotMode;state.last=0;state.bucket=-1;state.forceRender=1; setHash(); }
+}
+
+function parseHash(){
+  const h=location.hash||"";
+  const m=h.match(/step=(\d+)/);
+  if(m){ showCover(false); goto(clamp(+m[1],1,15),true); return; }
+  if(shotMode){ showCover(false); goto(1,true); return; }
+  if(h==="#cover"||h==="") showCover(true);
+}
+
+function enterFS(){
+  const el=document.documentElement;
+  if(!document.fullscreenElement){ el.requestFullscreen&&el.requestFullscreen().catch(()=>{}); }
+  else { document.exitFullscreen&&document.exitFullscreen(); }
+}
+document.addEventListener("fullscreenchange",()=>{
+  $("btnFs").textContent=document.fullscreenElement?"退出全屏":"全屏演示";
+});
+
+/* tooltip */
+const tip=$("tooltip");
+function moveTip(e){
+  const tw=tip.offsetWidth, th=tip.offsetHeight;
+  let x=e.clientX+14, y=e.clientY+14;
+  if(x+tw>window.innerWidth-8) x=e.clientX-tw-12;
+  if(y+th>window.innerHeight-8) y=e.clientY-th-12;
+  tip.style.left=x+"px"; tip.style.top=y+"px";
+}
+document.addEventListener("pointerover",e=>{
+  const n=e.target.closest&&e.target.closest("[data-tip]");
+  if(!n) return;
+  tip.textContent=n.getAttribute("data-tip");
+  tip.classList.add("show");
+  moveTip(e);
+});
+document.addEventListener("pointermove",e=>{ if(tip.classList.contains("show")) moveTip(e); });
+document.addEventListener("pointerout",e=>{
+  const n=e.target.closest&&e.target.closest("[data-tip]");
+  if(!n) return;
+  tip.classList.remove("show");
+});
+
+/* keys */
+document.addEventListener("keydown",e=>{
+  const tag=(e.target&&e.target.tagName)||"";
+  if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT") return;
+  if(state.cover){
+    if(e.key==="Enter"||e.key===" "){ e.preventDefault(); showCover(false); goto(state.step||1,true); }
+    return;
+  }
+  if(e.key==="ArrowRight"){ e.preventDefault(); if(state.step<15) goto(state.step+1,true); }
+  else if(e.key==="ArrowLeft"){ e.preventDefault(); if(state.step>1) goto(state.step-1,true); }
+  else if(e.key==="Home"){ e.preventDefault(); goto(1,true); }
+  else if(e.key==="End"){ e.preventDefault(); goto(15,true); }
+  else if(e.key===" " ){ e.preventDefault(); togglePlay(); }
+  else if(e.key==="r"||e.key==="R"){ e.preventDefault(); replay(); }
+  else if(e.key==="f"||e.key==="F"){ e.preventDefault(); enterFS(); }
+  else if(e.key==="Escape"){
+    if(document.fullscreenElement){ document.exitFullscreen&&document.exitFullscreen(); }
+  }
+});
+
+$("btnPrev").addEventListener("click",()=>state.step>1&&goto(state.step-1,true));
+$("btnNext").addEventListener("click",()=>state.step<15&&goto(state.step+1,true));
+$("btnPlay").addEventListener("click",togglePlay);
+$("btnReplay").addEventListener("click",replay);
+$("btnFs").addEventListener("click",enterFS);
+$("btnCover").addEventListener("click",()=>showCover(true));
+$("btnEnter").addEventListener("click",()=>{showCover(false);goto(1,true);});
+$("speed").addEventListener("change",e=>{state.speed=parseFloat(e.target.value)||1;});
+$("btnKeys").addEventListener("click",()=>{
+  alert("快捷键\n← / →  上一步 / 下一步\nHome / End  首步 / 末步\nSpace  暂停或继续本步动画\nR  重放本步动画\nF  进入或退出全屏\nEsc  退出全屏\n点击步骤条可直接跳转；悬停版图元素可看说明；QA 卡片可展开。");
+});
+window.addEventListener("hashchange",parseHash);
+
+parseHash();
+if(!state.cover){ /* parseHash already goto */ }
+else { renderNav(); $("stageTitle").textContent="封面"; }
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
