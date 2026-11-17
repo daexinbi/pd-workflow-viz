@@ -1576,7 +1576,7 @@ function go(n){
 }
 function replay(){S.el=0;S.p=0;S.playing=true;S.last=0;S.bucket=-1;S.force=1;updPlay();}
 function updPlay(){$("btnPlay").textContent=(S.playing||shotMode)?"❚❚ 暂停":"▶ 播放";}
-function togglePlay(){S.playing=!S.playing;S.last=0;updPlay();toast(S.playing?"继续播放":"已暂停");}
+function togglePlay(){if(!S.playing&&S.el>=DURATION){replay();toast("重新播放");return;}S.playing=!S.playing;S.last=0;updPlay();toast(S.playing?"继续播放":"已暂停");}
 var toastT=0;
 function toast(m){var t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove("show");},1300);}
 function loop(ts){
@@ -1584,12 +1584,12 @@ function loop(ts){
   if(!S.last) S.last=ts;
   var dt=Math.min(64,ts-S.last); S.last=ts;
   if(S.cover) return;
-  if(S.playing){S.el+=dt*S.speed; if(S.el>=DURATION+HOLD){S.el=0;S.bucket=-1;}}
+  if(S.playing){S.el+=dt*S.speed; if(S.el>=DURATION){S.el=DURATION;S.playing=false;S.force=1;updPlay();}}
   S.p=S.el<=DURATION?S.el/DURATION:1;
   $("progbar").style.width=(S.p*100).toFixed(2)+"%";
   var anim=S.playing&&S.p<1, b=anim?Math.floor(S.p*180):-1;
   if(S.force||(anim&&b!==S.bucket)){S.force=0;S.bucket=b;renderStep(S.step,S.p,S.el/1000);}
-  else{
+  else if(S.playing){
     var tsec=ts/1000, pu=document.getElementById("pulse"); if(pu) pu.setAttribute("r",11+4*Math.sin(tsec*3));
     var tk=document.getElementById("token");
     if(tk&&S.step===1){var a=-Math.PI/2+((tsec*0.12)%1)*2*Math.PI;tk.setAttribute("cx",310+212*Math.cos(a));tk.setAttribute("cy",310+212*Math.sin(a));}
